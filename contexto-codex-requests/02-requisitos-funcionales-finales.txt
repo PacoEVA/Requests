@@ -1,0 +1,404 @@
+﻿REQUISITOS FUNCIONALES FINALES DEL SISTEMA
+
+1. MÓDULO DEL EMPLEADO SIN LOGIN
+
+EMP-01 Registro inicial sin login
+- El empleado debe identificarse inicialmente con datos básicos.
+- Campos sugeridos: nombre, departamento, teléfono/extensión y código de empleado si existe.
+- No se usa usuario y contraseña para empleados solicitantes.
+
+EMP-02 Guardar identidad en navegador
+- Guardar un employeeId o employeeToken en localStorage.
+- Al volver a abrir la aplicación, el sistema debe reconocer al empleado.
+
+EMP-03 Crear empleado automáticamente en SQL Server
+- Aunque el empleado no tenga login, debe existir un registro en la base de datos.
+- Cada requisición debe quedar asociada a un EmployeeId.
+
+EMP-04 Editar datos del empleado
+- El empleado puede actualizar su nombre, departamento o teléfono.
+
+EMP-05 Validar empleado por código interno
+- Si la empresa usa códigos de empleado, se puede evitar duplicidad usando ese código.
+
+EMP-06 Restablecer identidad del navegador
+- Permitir cambiar de empleado si varias personas usan el mismo equipo.
+
+EMP-07 Ver perfil básico del empleado
+- Mostrar nombre y departamento activo en el área del empleado.
+
+2. MÓDULO DE CREACIÓN DE REQUISICIONES
+
+REQ-01 Crear requisición
+- El empleado puede crear una solicitud de material gastable.
+
+REQ-02 Generar código automático
+- Código recomendado: REQ-YYYY-000001.
+- Ejemplo: REQ-2026-000001.
+
+REQ-03 Agregar varios materiales en una requisición
+- Una requisición puede contener múltiples líneas de materiales.
+
+REQ-04 Seleccionar material desde catálogo
+- El empleado puede seleccionar materiales registrados.
+
+REQ-05 Escribir material manualmente
+- Permitir opción de material no catalogado como texto libre.
+- Debe marcarse como material manual/no catalogado.
+
+REQ-06 Indicar cantidad solicitada
+- Cada línea debe tener cantidad mayor que 0.
+
+REQ-07 Indicar unidad de medida
+- Ejemplos: unidad, caja, paquete, resma, galón.
+
+REQ-08 Agregar comentario general
+- Campo para explicar motivo o necesidad de la requisición.
+
+REQ-09 Agregar comentario por material
+- Cada línea de material puede tener una observación.
+
+REQ-10 Seleccionar prioridad
+- Valores: Baja, Media, Alta, Urgente.
+
+REQ-12 Confirmación antes de enviar
+- Mostrar resumen antes de crear la requisición.
+
+REQ-13 Validación de campos
+- No permitir requisiciones vacías.
+- No permitir cantidades inválidas.
+- No permitir empleado no identificado.
+
+REQ-14 Cancelar requisición propia
+- El empleado puede cancelar una solicitud si todavía no fue aprobada, entregada o cerrada.
+
+IMPORTANTE: Se removieron archivos adjuntos. No implementar REQ-11.
+
+3. MÓDULO DE SEGUIMIENTO DEL EMPLEADO
+
+SEG-01 Ver mis requisiciones
+- El empleado puede ver solo sus propias requisiciones.
+
+SEG-02 Ver detalle de una requisición
+- Mostrar encabezado, items, estado, comentarios e historial.
+
+SEG-03 Ver estado actual
+- Estados visibles para el empleado.
+
+SEG-04 Recibir actualizaciones en tiempo real
+- Usar Socket.IO.
+
+SEG-05 Notificación visual dentro de la app
+- Toast o panel de notificaciones.
+
+SEG-06 Historial de cambios
+- Mostrar cambios de estado con fecha/hora.
+
+SEG-07 Filtro de mis requisiciones
+- Filtrar por estado y fecha.
+
+SEG-08 Buscador por código
+- Buscar por código de requisición.
+
+4. COMENTARIOS Y COMUNICACIÓN
+
+COM-01 Comentarios en una requisición
+- Empleado y Compras pueden escribir comentarios.
+
+COM-02 Comentarios en tiempo real
+- Los comentarios deben aparecer sin recargar la página.
+
+COM-03 Identificar autor del comentario
+- Autor puede ser Employee o InternalUser.
+
+COM-04 Fecha y hora de cada comentario
+- Registrar CreatedAt.
+
+COM-05 Comentario obligatorio al rechazar
+- Si Compras rechaza, debe indicar motivo.
+
+COM-06 Comentario obligatorio al cancelar
+- Si Compras o empleado cancela, debe indicar motivo.
+
+IMPORTANTE: No implementar adjuntos en comentarios. No implementar COM-07.
+
+5. LOGIN PARA COMPRAS / ADMIN / SUPERVISOR
+
+AUTH-01 Login de usuario interno
+- Usuarios internos acceden con usuario y contraseña.
+
+AUTH-02 Contraseña encriptada
+- Usar bcrypt.
+
+AUTH-03 JWT o sesión segura
+- Recomendado: JWT guardado en memoria/localStorage o cookie httpOnly.
+- Para simplicidad inicial, JWT Bearer es aceptable.
+
+AUTH-04 Logout
+- Cerrar sesión del dashboard.
+
+AUTH-05 Proteger rutas del dashboard
+- Rutas privadas en React y middleware auth en Express.
+
+AUTH-06 Roles de usuario
+- Roles permitidos:
+  - Admin.
+  - Compras.
+  - Supervisor.
+- Rol Consulta eliminado.
+
+AUTH-07 Cambiar contraseña
+- Usuario interno puede cambiar su contraseña si conoce la anterior.
+
+AUTH-08 Recuperación/restablecimiento sencillo en plataforma
+- Debe realizarse dentro del sistema.
+- No requiere correo en primera versión.
+- Flujo recomendado:
+  1. Un Admin entra al módulo Usuarios.
+  2. Selecciona el usuario interno.
+  3. Presiona "Restablecer contraseña".
+  4. El sistema genera una contraseña temporal o permite escribir una nueva.
+  5. Se marca RequirePasswordChange = 1.
+  6. En el siguiente login, el usuario debe cambiar la contraseña.
+
+AUTH-09 Usuario activo/inactivo
+- Un usuario interno puede bloquearse sin eliminar historial.
+
+6. DASHBOARD DE COMPRAS
+
+DASH-01 Dashboard principal
+- Vista general de requisiciones y métricas.
+
+DASH-02 Tarjeta de pendientes
+- Total de requisiciones pendientes.
+
+DASH-03 Tarjeta de en revisión
+- Total en revisión.
+
+DASH-04 Tarjeta de aprobadas
+- Total aprobadas.
+
+DASH-05 Tarjeta de rechazadas
+- Total rechazadas.
+
+DASH-06 Tarjeta de entregadas
+- Total entregadas.
+
+DASH-07 Tarjeta de canceladas
+- Total canceladas.
+
+DASH-08 Indicador de urgentes
+- Total de requisiciones con prioridad urgente.
+
+DASH-09 Últimas requisiciones
+- Tabla/resumen de solicitudes recientes.
+
+DASH-10 Requisiciones atrasadas
+- Solicitudes sin atención después de cierto tiempo.
+- Aunque se eliminó CONF-04, el criterio puede estar fijo en código inicialmente, por ejemplo 48 horas.
+
+DASH-11 Gráfica por estado
+- Visualización de distribución por estado.
+
+DASH-12 Estadísticas operativas
+- Debe incluir una sección de estadísticas con:
+  - Departamento con más solicitudes.
+  - Top 5 departamentos por cantidad de requisiciones.
+  - Material más utilizado.
+  - Top 10 materiales más solicitados por cantidad total.
+  - Requisiciones por prioridad.
+  - Requisiciones por estado.
+  - Promedio de tiempo de respuesta.
+  - Promedio de tiempo hasta entrega.
+  - Requisiciones creadas por día/semana/mes.
+  - Cantidad de requisiciones canceladas y rechazadas.
+  - Porcentaje de solicitudes entregadas.
+
+7. GESTIÓN DE REQUISICIONES DESDE COMPRAS
+
+GREQ-01 Ver listado general
+- Tabla de todas las requisiciones.
+
+GREQ-02 Ver detalle completo
+- Ver empleado, departamento, fecha, prioridad, items, comentarios e historial.
+
+GREQ-03 Cambiar estado
+- Cambiar estados permitidos.
+
+GREQ-04 Aprobar requisición
+- Cambiar a Aprobada.
+
+GREQ-05 Rechazar requisición
+- Cambiar a Rechazada con motivo obligatorio.
+
+GREQ-06 Marcar como en revisión
+- Cambiar a En revisión.
+
+GREQ-07 Marcar como en compra
+- Cambiar a En compra.
+
+GREQ-08 Marcar como lista para entregar
+- Cambiar a Lista para entregar.
+
+GREQ-09 Marcar como entregada
+- Cambiar a Entregada.
+
+GREQ-10 Cancelar requisición
+- Cancelar desde dashboard con motivo.
+
+GREQ-11 Asignar responsable
+- Asignar usuario interno responsable.
+
+GREQ-12 Editar cantidades aprobadas
+- Compras puede aprobar menos cantidad que la solicitada.
+
+GREQ-13 Entrega parcial
+- Permitir entregar parte de los materiales.
+- Puede quedar para fase posterior.
+
+GREQ-14 Reabrir requisición
+- Reabrir solicitud cerrada por error.
+- Puede quedar para fase posterior.
+
+GREQ-15 Imprimir requisición
+- Vista imprimible.
+
+GREQ-16 Exportar requisición a PDF
+- Fase posterior.
+
+8. CATÁLOGO DE MATERIALES
+
+MAT-01 Crear material.
+MAT-02 Editar material.
+MAT-03 Desactivar material.
+MAT-04 Categorías de materiales.
+MAT-05 Unidad de medida.
+MAT-06 Buscador de materiales.
+MAT-07 Materiales frecuentes.
+MAT-08 Permitir material no catalogado.
+
+9. INVENTARIO BÁSICO
+
+INV-01 Registrar stock actual.
+INV-02 Stock mínimo.
+INV-03 Alerta de stock bajo.
+INV-04 Descontar stock al entregar.
+INV-05 Entrada de inventario.
+INV-06 Historial de movimientos.
+INV-07 Ajuste manual de stock.
+INV-08 Bloquear aprobación si no hay stock.
+INV-09 Sugerir compra automática.
+
+NOTA: Temporalmente no se integra SAP B1. El inventario se administra solamente en la base de datos local de Requests.
+
+10. DEPARTAMENTOS
+
+DEP-01 Crear departamentos.
+DEP-02 Editar departamentos.
+DEP-03 Desactivar departamentos.
+
+IMPORTANTE: Sucursales eliminadas. No implementar SUC-01, SUC-02, SUC-03.
+
+11. USUARIOS INTERNOS
+
+USR-01 Crear usuarios internos.
+USR-02 Editar usuarios internos.
+USR-03 Desactivar usuarios.
+USR-04 Asignar rol.
+USR-05 Ver actividad de usuario.
+
+12. ROLES Y PERMISOS
+
+ROL-01 Admin.
+ROL-02 Compras.
+ROL-03 Supervisor.
+
+No implementar rol Consulta.
+
+13. APROBACIONES
+
+APR-01 Aprobación directa por Compras.
+APR-02 Aprobación por supervisor, opcional/fase posterior.
+APR-03 Aprobación por cantidad, opcional/fase posterior.
+APR-04 Comentario de aprobación.
+APR-05 Historial de aprobaciones.
+
+14. NOTIFICACIONES EN TIEMPO REAL
+
+NOT-01 Notificar nueva requisición a Compras.
+NOT-02 Notificar cambio de estado al empleado.
+NOT-03 Notificar nuevo comentario.
+NOT-04 Contador de notificaciones.
+NOT-05 Marcar notificación como leída.
+NOT-06 Sonido opcional.
+NOT-07 Correo, fase posterior.
+NOT-08 WhatsApp, fase posterior.
+
+15. HISTORIAL Y AUDITORÍA
+
+AUD-01 Historial de estados.
+AUD-02 Historial de comentarios.
+AUD-03 Historial de edición.
+AUD-04 Usuario que realizó acción.
+AUD-05 Fecha y hora.
+AUD-06 Motivo de rechazo/cancelación.
+AUD-07 Bitácora administrativa.
+
+16. FILTROS Y BÚSQUEDA
+
+FIL-01 Filtrar por estado.
+FIL-02 Filtrar por fecha.
+FIL-03 Filtrar por departamento.
+FIL-05 Filtrar por prioridad.
+FIL-06 Filtrar por empleado.
+FIL-07 Buscar por código.
+FIL-08 Buscar por material.
+FIL-09 Ordenar por fecha.
+FIL-10 Ordenar por prioridad.
+
+No implementar FIL-04 porque sucursales fueron eliminadas.
+
+17. REPORTES
+
+REP-01 Reporte de requisiciones por fecha.
+REP-02 Reporte por estado.
+REP-03 Reporte por departamento.
+REP-04 Reporte por empleado.
+REP-05 Reporte por material.
+REP-06 Tiempo promedio de respuesta.
+REP-07 Tiempo promedio de entrega.
+REP-08 Requisiciones atrasadas.
+REP-09 Exportar a Excel.
+REP-10 Exportar a PDF, fase posterior.
+
+18. PANEL KANBAN
+
+KAN-01 Vista Kanban por estado.
+KAN-02 Arrastrar entre estados.
+KAN-03 Resumen de tarjeta.
+KAN-04 Abrir detalle desde tarjeta.
+
+Kanban puede quedar para una fase posterior. La primera versión puede iniciar con tabla.
+
+19. CONFIGURACIONES
+
+CONF-03 Configurar prioridades, opcional.
+CONF-05 Configurar unidades de medida.
+
+No implementar:
+- CONF-01.
+- CONF-02.
+- CONF-04.
+
+20. SEGURIDAD Y VALIDACIONES
+
+SEC-01 Validar datos en frontend.
+SEC-02 Validar datos en backend.
+SEC-03 Proteger endpoints privados.
+SEC-04 Sanitizar entradas.
+SEC-05 Rate limiting básico.
+SEC-06 CORS configurado correctamente.
+SEC-07 Logs de errores.
+SEC-08 Manejo global de errores.
+SEC-09 Validar Socket.IO.
+SEC-10 Variables de entorno.

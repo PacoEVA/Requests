@@ -1,0 +1,31 @@
+{
+  "name": "requests-platform",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Plataforma interna de requisiciones de material gastable.",
+  "workspaces": [
+    "backend",
+    "frontend"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces",
+    "dev": "concurrently -n backend,frontend -c blue,green \"cross-env PORT=4100 npm run dev:backend\" \"cross-env VITE_API_URL=http://localhost:4100/api VITE_SOCKET_URL=http://localhost:4100 npm run dev:frontend\"",
+    "dev:ports": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/dev-ports.ps1",
+    "dev:stop": "kill-port 4100 5173 5174 5175",
+    "dev:frontend": "npm run dev --workspace frontend --",
+    "dev:backend": "npm run dev --workspace backend --",
+    "lint": "npm run lint --workspaces",
+    "test": "npm run test --workspaces",
+    "audit:security": "npm audit --workspaces --audit-level=moderate",
+    "ci": "npm run lint && npm run test && npm run build && npm run audit:security"
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "npm": ">=10.0.0"
+  },
+  "devDependencies": {
+    "concurrently": "^10.0.3",
+    "cross-env": "^10.1.0",
+    "kill-port": "^2.0.1"
+  }
+}

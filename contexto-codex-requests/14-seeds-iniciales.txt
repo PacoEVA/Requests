@@ -1,0 +1,77 @@
+﻿SEEDS INICIALES
+
+ROLES
+Insertar:
+1. Admin
+2. Compras
+3. Supervisor
+
+No insertar rol Consulta.
+
+ESTADOS
+Insertar en RequisitionStatuses:
+1. PENDING / Pendiente / SortOrder 1 / IsFinal 0
+2. IN_REVIEW / En revisión / SortOrder 2 / IsFinal 0
+3. APPROVED / Aprobada / SortOrder 3 / IsFinal 0
+4. IN_PURCHASE / En compra / SortOrder 4 / IsFinal 0
+5. READY_TO_DELIVER / Lista para entregar / SortOrder 5 / IsFinal 0
+6. PARTIALLY_DELIVERED / Entrega parcial / SortOrder 6 / IsFinal 0
+7. DELIVERED / Entregada / SortOrder 7 / IsFinal 1
+8. REJECTED / Rechazada / SortOrder 8 / IsFinal 1
+9. CANCELLED / Cancelada / SortOrder 9 / IsFinal 1
+
+PRIORIDADES
+Aunque no exista tabla inicialmente, usar estos valores:
+- Baja
+- Media
+- Alta
+- Urgente
+
+UNIDADES DE MEDIDA SUGERIDAS
+Si se crea tabla futura o catálogo simple:
+- Unidad
+- Caja
+- Paquete
+- Resma
+- Galón
+- Litro
+- Metro
+- Rollo
+
+DEPARTAMENTOS DE EJEMPLO
+- Administración
+- Contabilidad
+- Compras
+- Ventas
+- Almacén
+- Recursos Humanos
+- Tecnología
+
+CATEGORÍAS DE MATERIALES DE EJEMPLO
+- Papelería
+- Limpieza
+- Oficina
+- Tecnología
+- Otros
+
+MATERIALES DE EJEMPLO
+- Papel bond carta / Resma / Papelería
+- Lapicero azul / Unidad / Oficina
+- Lapicero negro / Unidad / Oficina
+- Folder manila / Unidad / Papelería
+- Grapas / Caja / Oficina
+- Cinta adhesiva / Unidad / Oficina
+- Tóner / Unidad / Tecnología
+- Cloro / Galón / Limpieza
+- Papel higiénico / Paquete / Limpieza
+
+USUARIO ADMIN INICIAL
+Crear usuario admin inicial por seed:
+Username: admin
+Password temporal: Admin123*
+Role: Admin
+RequirePasswordChange: true
+
+IMPORTANTE
+- La contraseña debe guardarse hasheada con bcrypt.
+- En el primer login, el sistema debe obligar a cambiarla.

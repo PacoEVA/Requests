@@ -1,0 +1,290 @@
+﻿API REST RECOMENDADA
+
+BASE URL
+/api
+
+AUTENTICACIÓN
+
+POST /api/auth/login
+Body:
+{
+  "username": "admin",
+  "password": "123456"
+}
+Respuesta:
+{
+  "token": "jwt",
+  "user": { "id": 1, "username": "admin", "fullName": "Admin", "role": "Admin", "requirePasswordChange": false }
+}
+
+POST /api/auth/logout
+- Puede ser client-side si se usa JWT Bearer.
+
+GET /api/auth/me
+- Requiere token.
+- Retorna usuario actual.
+
+POST /api/auth/change-password
+- Requiere token.
+Body:
+{
+  "currentPassword": "old",
+  "newPassword": "new"
+}
+
+POST /api/auth/force-change-password
+- Requiere token.
+- Usado cuando RequirePasswordChange = true.
+Body:
+{
+  "newPassword": "new"
+}
+
+EMPLEADOS SIN LOGIN
+
+POST /api/employees/identify
+Body:
+{
+  "name": "Juan Pérez",
+  "departmentId": 1,
+  "employeeCode": "EMP001",
+  "phoneOrExtension": "250"
+}
+Respuesta:
+{
+  "employee": { ... },
+  "publicToken": "uuid"
+}
+
+GET /api/employees/me
+Headers:
+- x-employee-token: uuid
+Respuesta:
+{
+  "employee": { ... }
+}
+
+PUT /api/employees/me
+Headers:
+- x-employee-token: uuid
+Body:
+{
+  "name": "Juan Pérez",
+  "departmentId": 1,
+  "phoneOrExtension": "250"
+}
+
+REQUISICIONES DEL EMPLEADO
+
+POST /api/requisitions
+Headers:
+- x-employee-token: uuid
+Body:
+{
+  "priority": "Media",
+  "generalComment": "Necesito estos materiales para el área de contabilidad",
+  "items": [
+    {
+      "materialId": 1,
+      "quantityRequested": 5,
+      "unitOfMeasure": "Resma",
+      "comment": "Papel tamaño carta"
+    },
+    {
+      "manualMaterialName": "Marcadores rojos",
+      "quantityRequested": 3,
+      "unitOfMeasure": "Unidad",
+      "comment": "No aparece en catálogo"
+    }
+  ]
+}
+
+GET /api/requisitions/my
+Headers:
+- x-employee-token: uuid
+Query:
+- status
+- dateFrom
+- dateTo
+- search
+- page
+- pageSize
+
+GET /api/requisitions/my/:id
+Headers:
+- x-employee-token: uuid
+
+PATCH /api/requisitions/my/:id/cancel
+Headers:
+- x-employee-token: uuid
+Body:
+{
+  "reason": "Ya no necesito el material"
+}
+
+COMENTARIOS
+
+GET /api/requisitions/:id/comments
+- Para empleado: requiere x-employee-token y validar que sea dueño.
+- Para admin: requiere JWT.
+
+POST /api/requisitions/:id/comments
+Body:
+{
+  "message": "Comentario de prueba"
+}
+
+DASHBOARD ADMIN
+
+GET /api/admin/dashboard/summary
+- Requiere JWT.
+Respuesta sugerida:
+{
+  "counts": {
+    "pending": 10,
+    "inReview": 3,
+    "approved": 7,
+    "rejected": 2,
+    "delivered": 40,
+    "cancelled": 1,
+    "urgent": 4
+  }
+}
+
+GET /api/admin/dashboard/recent-requisitions
+- Requiere JWT.
+
+GET /api/admin/dashboard/statistics
+- Requiere JWT.
+Query:
+- dateFrom
+- dateTo
+Respuesta sugerida:
+{
+  "topDepartments": [],
+  "topMaterials": [],
+  "requestsByStatus": [],
+  "requestsByPriority": [],
+  "requestsTrend": [],
+  "averageResponseTimeHours": 5.3,
+  "averageDeliveryTimeHours": 24.1,
+  "deliveryRate": 0.82
+}
+
+REQUISICIONES ADMIN
+
+GET /api/admin/requisitions
+- Requiere JWT.
+Query:
+- status
+- dateFrom
+- dateTo
+- departmentId
+- priority
+- employeeSearch
+- code
+- materialSearch
+- page
+- pageSize
+- sortBy
+- sortDirection
+
+GET /api/admin/requisitions/:id
+- Requiere JWT.
+
+PATCH /api/admin/requisitions/:id/status
+- Requiere JWT.
+Body:
+{
+  "statusCode": "APPROVED",
+  "reason": "Aprobado por compras",
+  "items": [
+    { "requisitionItemId": 1, "quantityApproved": 5 }
+  ]
+}
+
+PATCH /api/admin/requisitions/:id/assign
+- Requiere JWT.
+Body:
+{
+  "assignedToUserId": 2
+}
+
+PATCH /api/admin/requisitions/:id/deliver
+- Requiere JWT.
+Body:
+{
+  "items": [
+    { "requisitionItemId": 1, "quantityDelivered": 5 }
+  ],
+  "comment": "Entregado completo"
+}
+
+USUARIOS INTERNOS
+
+GET /api/admin/users
+POST /api/admin/users
+PUT /api/admin/users/:id
+PATCH /api/admin/users/:id/deactivate
+PATCH /api/admin/users/:id/activate
+POST /api/admin/users/:id/reset-password
+
+POST /api/admin/users/:id/reset-password
+Body opción 1:
+{
+  "newPassword": "Temporal123"
+}
+Body opción 2:
+{
+  "autoGenerate": true
+}
+Respuesta:
+{
+  "temporaryPassword": "Temporal123",
+  "requirePasswordChange": true
+}
+
+MATERIALES
+
+GET /api/materials
+- Público para formulario de empleado.
+- Retornar solo activos y solicitables.
+
+GET /api/admin/materials
+POST /api/admin/materials
+PUT /api/admin/materials/:id
+PATCH /api/admin/materials/:id/deactivate
+PATCH /api/admin/materials/:id/activate
+
+CATEGORÍAS DE MATERIAL
+
+GET /api/material-categories
+GET /api/admin/material-categories
+POST /api/admin/material-categories
+PUT /api/admin/material-categories/:id
+PATCH /api/admin/material-categories/:id/deactivate
+
+DEPARTAMENTOS
+
+GET /api/departments
+GET /api/admin/departments
+POST /api/admin/departments
+PUT /api/admin/departments/:id
+PATCH /api/admin/departments/:id/deactivate
+PATCH /api/admin/departments/:id/activate
+
+INVENTARIO
+
+GET /api/admin/inventory
+GET /api/admin/inventory/low-stock
+PATCH /api/admin/inventory/:materialId/minimum-stock
+POST /api/admin/inventory/:materialId/adjust
+GET /api/admin/inventory/movements
+
+ENDPOINTS QUE NO DEBEN CREARSE
+- Endpoints de upload.
+- Endpoints de adjuntos.
+- Endpoints de sucursales.
+- Endpoints de configuración de nombre de empresa.
+- Endpoints para configuración dinámica de estados.
+- Endpoints de integración o sincronización SAP.

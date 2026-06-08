@@ -1,0 +1,172 @@
+﻿EVENTOS SOCKET.IO
+
+OBJETIVO
+Socket.IO se utilizará para notificaciones y actualizaciones en tiempo real entre:
+- Empleado solicitante.
+- Dashboard de Compras/Admin/Supervisor.
+
+CONEXIÓN
+
+Al conectar:
+- Si es empleado, debe enviar employeeToken o employeeId.
+- Si es admin, debe enviar JWT o autenticarse después de conectar.
+
+Rooms recomendadas:
+- employee:{employeeId}
+- role:Admin
+- role:Compras
+- role:Supervisor
+- requisition:{requisitionId}
+- dashboard:admins
+
+EVENTOS DEL CLIENTE AL SERVIDOR
+
+employee:join
+Payload:
+{
+  "employeeToken": "uuid"
+}
+Acción:
+- Validar token.
+- Asociar socket a room employee:{employeeId}.
+
+admin:join
+Payload:
+{
+  "token": "jwt"
+}
+Acción:
+- Validar JWT.
+- Asociar socket a rooms del usuario.
+- Si rol Admin o Compras, unir a dashboard:admins.
+
+requisition:join
+Payload:
+{
+  "requisitionId": 1
+}
+Acción:
+- Validar permiso.
+- Unir al room requisition:{id}.
+
+requisition:leave
+Payload:
+{
+  "requisitionId": 1
+}
+
+notification:read
+Payload:
+{
+  "notificationId": 1
+}
+
+EVENTOS DEL SERVIDOR AL CLIENTE
+
+requisition:created
+Emitir a:
+- dashboard:admins
+- role:Compras
+Payload:
+{
+  "requisition": {
+    "id": 1,
+    "code": "REQ-2026-000001",
+    "employeeName": "Juan Pérez",
+    "departmentName": "Contabilidad",
+    "priority": "Media",
+    "status": "Pendiente",
+    "createdAt": "..."
+  }
+}
+
+requisition:statusChanged
+Emitir a:
+- employee:{employeeId}
+- requisition:{id}
+- dashboard:admins
+Payload:
+{
+  "requisitionId": 1,
+  "code": "REQ-2026-000001",
+  "previousStatus": "Pendiente",
+  "newStatus": "Aprobada",
+  "message": "Tu requisición fue aprobada"
+}
+
+requisition:updated
+Emitir a:
+- employee:{employeeId}
+- requisition:{id}
+- dashboard:admins
+
+requisition:cancelled
+Emitir a:
+- employee:{employeeId}
+- requisition:{id}
+- dashboard:admins
+
+requisition:assigned
+Emitir a:
+- usuario asignado si está conectado.
+- dashboard:admins.
+
+comment:created
+Emitir a:
+- employee:{employeeId}
+- requisition:{id}
+- dashboard:admins
+Payload:
+{
+  "requisitionId": 1,
+  "comment": {
+    "id": 10,
+    "authorType": "INTERNAL_USER",
+    "authorName": "María Compras",
+    "message": "Se está revisando la solicitud",
+    "createdAt": "..."
+  }
+}
+
+notification:new
+Emitir a:
+- destinatario específico.
+Payload:
+{
+  "id": 1,
+  "title": "Requisición aprobada",
+  "message": "REQ-2026-000001 fue aprobada",
+  "type": "STATUS_CHANGED",
+  "createdAt": "..."
+}
+
+dashboard:summaryUpdated
+Emitir a:
+- dashboard:admins.
+Payload:
+{
+  "counts": {
+    "pending": 10,
+    "approved": 5,
+    "delivered": 20
+  }
+}
+
+inventory:lowStock
+Emitir a:
+- role:Admin
+- role:Compras
+Payload:
+{
+  "materialId": 1,
+  "materialName": "Papel bond",
+  "currentStock": 2,
+  "minimumStock": 5
+}
+
+REGLAS IMPORTANTES
+- No confiar en IDs recibidos por Socket.IO sin validar permisos.
+- Las operaciones críticas deben hacerse por API REST.
+- Socket.IO solo notifica resultados ya guardados.
+- Siempre guardar primero en SQL Server y luego emitir evento.
+- Si falla Socket.IO, la API REST debe seguir funcionando.

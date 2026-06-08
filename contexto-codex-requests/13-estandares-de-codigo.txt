@@ -1,0 +1,97 @@
+﻿ESTÁNDARES DE CÓDIGO PARA CODEX
+
+GENERAL
+- Usar TypeScript en frontend y backend si es posible.
+- Código modular.
+- Nombres claros.
+- Evitar archivos gigantes.
+- Separar responsabilidades.
+- No mezclar SQL dentro de componentes React.
+- No mezclar lógica de negocio dentro de rutas Express.
+
+BACKEND EXPRESS
+- Rutas solo definen endpoints y middlewares.
+- Controllers reciben request/response y llaman servicios.
+- Services contienen reglas de negocio.
+- Repositories contienen consultas SQL.
+- Middlewares para auth, validación y errores.
+- Usar async/await.
+- Manejo centralizado de errores.
+- Respuestas JSON consistentes.
+
+Formato de respuesta exitosa:
+{
+  "success": true,
+  "data": {}
+}
+
+Formato de error:
+{
+  "success": false,
+  "message": "Mensaje de error",
+  "errors": []
+}
+
+SQL SERVER
+- Usar parámetros, no concatenar strings SQL con datos del usuario.
+- Usar transacciones al crear requisiciones.
+- Usar índices en campos de búsqueda:
+  - Requisitions.Code.
+  - Requisitions.StatusId.
+  - Requisitions.EmployeeId.
+  - Requisitions.CreatedAt.
+  - Employees.PublicToken.
+  - Materials.Name.
+
+SEGURIDAD
+- Contraseñas con bcrypt.
+- JWT con expiración.
+- Variables sensibles en .env.
+- CORS restringido al frontend.
+- Validar x-employee-token.
+- Validar roles en endpoints admin.
+- No permitir que un empleado vea requisiciones de otro empleado.
+
+FRONTEND REACT
+- Componentes pequeños.
+- Servicios separados para llamadas HTTP.
+- Contextos:
+  - AuthContext.
+  - EmployeeContext.
+  - SocketContext.
+- Tipos compartidos en carpeta types.
+- Mostrar estados de loading, error y empty.
+- Usar toasts para notificaciones.
+- Formularios validados antes de enviar.
+
+SOCKET.IO
+- Guardar primero en BD y luego emitir eventos.
+- Usar rooms.
+- Validar identidad antes de unir a rooms.
+- No hacer cambios críticos solo por Socket.IO.
+
+NOMENCLATURA
+- Tablas en PascalCase: Requisitions, Materials.
+- Campos en PascalCase en SQL Server.
+- Variables en camelCase en TypeScript.
+- Tipos/interfaces en PascalCase.
+
+ARCHIVOS QUE NO DEBEN IMPLEMENTARSE
+- No crear lógica de upload.
+- No instalar multer.
+- No crear módulo de attachments.
+- No crear módulo de branches/sucursales.
+- No crear rol Consulta.
+
+VARIABLES .ENV SUGERIDAS
+PORT=4000
+NODE_ENV=development
+CLIENT_URL=http://localhost:5173
+JWT_SECRET=change_me
+JWT_EXPIRES_IN=8h
+DB_SERVER=localhost
+DB_DATABASE=RequestsDb
+DB_USER=sa
+DB_PASSWORD=secret
+DB_ENCRYPT=false
+DB_TRUST_SERVER_CERTIFICATE=true

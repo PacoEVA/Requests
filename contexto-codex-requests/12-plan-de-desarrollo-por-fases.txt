@@ -1,0 +1,100 @@
+﻿PLAN DE DESARROLLO POR FASES
+
+FASE 1: MVP FUNCIONAL
+Objetivo:
+- Tener el flujo completo de requisición funcionando.
+
+Incluir:
+- Identificación de empleado sin login.
+- Persistencia de employeeToken en localStorage.
+- Crear requisición con varios items.
+- Código automático.
+- Login de usuario interno.
+- Dashboard básico.
+- Listado y detalle de requisiciones.
+- Cambiar estado: Pendiente, Aprobada, Rechazada, Entregada, Cancelada.
+- Motivo obligatorio al rechazar/cancelar.
+- Historial de estados.
+- Notificación en tiempo real de nueva requisición.
+- Notificación en tiempo real por cambio de estado.
+- Comentarios básicos sin adjuntos.
+- Departamentos básicos.
+- Materiales básicos.
+
+FASE 2: Gestión completa de compras
+Objetivo:
+- Mejorar operación del encargado.
+
+Incluir:
+- Estado En revisión.
+- Estado En compra.
+- Estado Lista para entregar.
+- Asignar responsable.
+- Cantidades aprobadas.
+- Entrega parcial.
+- Filtros avanzados.
+- Buscador por material.
+- Comentarios en tiempo real.
+- Contador de notificaciones.
+- Usuarios internos.
+- Roles Admin, Compras, Supervisor.
+- Restablecimiento de contraseña en plataforma.
+
+FASE 3: Estadísticas y reportes
+Objetivo:
+- Dar valor administrativo.
+
+Incluir:
+- DASH-12 estadísticas operativas.
+- Top departamentos.
+- Top materiales.
+- Requisiciones por estado.
+- Requisiciones por prioridad.
+- Tendencias por fecha.
+- Tiempo promedio de respuesta.
+- Tiempo promedio de entrega.
+- Exportar Excel/CSV.
+
+FASE 4: Inventario
+Objetivo:
+- Controlar disponibilidad de materiales.
+
+Incluir:
+- Stock actual.
+- Stock mínimo.
+- Alertas de bajo inventario.
+- Descuento al entregar para materiales locales.
+- Movimientos de inventario.
+- Ajustes manuales.
+
+FASE 5: Inventario local avanzado
+Objetivo:
+- Fortalecer la administración del inventario local.
+
+Incluir:
+- Alertas de bajo stock.
+- Ajustes manuales auditados.
+- Historial de movimientos.
+- Reportes de consumo por material.
+
+FASE 6: Mejoras avanzadas
+Objetivo:
+- Mejorar experiencia visual y control.
+
+Incluir:
+- Vista Kanban.
+- Drag and drop entre estados.
+- Exportar PDF.
+- Aprobación por supervisor.
+- Aprobación por cantidad.
+- Notificaciones por correo.
+- WhatsApp Business API, si se decide.
+
+NO INCLUIR EN NINGUNA FASE ACTUAL
+- Sucursales.
+- Archivos adjuntos.
+- Rol Consulta.
+- Configuración de nombre de empresa.
+- Integraciones externas de inventario.
+- Configuración dinámica de estados.
+- Configuración de tiempo máximo pendiente desde UI.

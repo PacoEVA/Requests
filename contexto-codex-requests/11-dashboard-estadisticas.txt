@@ -1,0 +1,203 @@
+﻿DASH-12: ESTADÍSTICAS OPERATIVAS DEL DASHBOARD
+
+OBJETIVO
+Agregar al dashboard una sección de estadísticas que permita a Compras/Admin entender el comportamiento de las requisiciones y del consumo de materiales.
+
+FILTROS GENERALES
+Las estadísticas deben aceptar:
+- Fecha desde.
+- Fecha hasta.
+- Departamento.
+- Estado.
+- Prioridad.
+
+MÉTRICAS RECOMENDADAS
+
+1. Departamento con más solicitudes
+Descripción:
+- Mostrar el departamento que más requisiciones ha creado en el rango seleccionado.
+
+Consulta lógica:
+- Agrupar Requisitions por DepartmentId del Employee.
+- Ordenar por COUNT(*) DESC.
+
+2. Top departamentos por solicitudes
+Descripción:
+- Ranking de los 5 departamentos con más requisiciones.
+
+Campos:
+- DepartmentId.
+- DepartmentName.
+- TotalRequisitions.
+
+3. Material más utilizado
+Descripción:
+- Mostrar material con mayor cantidad total solicitada.
+
+Cálculo:
+- SUM(RequisitionItems.QuantityRequested) agrupado por MaterialId o ManualMaterialName.
+
+4. Top materiales más solicitados
+Descripción:
+- Top 10 materiales por cantidad total solicitada.
+
+Campos:
+- MaterialId.
+- MaterialName.
+- TotalQuantityRequested.
+- TotalRequisitionLines.
+
+5. Requisiciones por estado
+Descripción:
+- Conteo por estado.
+
+Campos:
+- StatusName.
+- Total.
+
+6. Requisiciones por prioridad
+Descripción:
+- Conteo por prioridad: Baja, Media, Alta, Urgente.
+
+7. Tendencia de requisiciones
+Descripción:
+- Cantidad de requisiciones creadas por día, semana o mes.
+- Para una primera versión, agrupar por día.
+
+8. Tiempo promedio de respuesta
+Descripción:
+- Tiempo promedio desde CreatedAt hasta primer cambio de estado desde Pendiente.
+- Puede calcularse usando RequisitionHistory.
+
+9. Tiempo promedio de entrega
+Descripción:
+- Tiempo promedio desde CreatedAt hasta estado Entregada.
+
+10. Porcentaje de entrega
+Descripción:
+- Total entregadas / total de requisiciones cerradas o total general, según se decida.
+
+11. Requisiciones rechazadas y canceladas
+Descripción:
+- Mostrar cantidad y porcentaje.
+
+12. Requisiciones urgentes
+Descripción:
+- Cantidad de requisiciones con Priority = Urgente.
+
+ENDPOINT
+GET /api/admin/dashboard/statistics
+
+Query params:
+- dateFrom
+- dateTo
+- departmentId
+- statusCode
+- priority
+
+Respuesta sugerida:
+{
+  "topDepartment": {
+    "departmentId": 1,
+    "departmentName": "Contabilidad",
+    "totalRequisitions": 25
+  },
+  "topDepartments": [
+    { "departmentId": 1, "departmentName": "Contabilidad", "totalRequisitions": 25 }
+  ],
+  "topMaterial": {
+    "materialId": 1,
+    "materialName": "Papel bond",
+    "totalQuantityRequested": 120
+  },
+  "topMaterials": [
+    { "materialId": 1, "materialName": "Papel bond", "totalQuantityRequested": 120 }
+  ],
+  "requestsByStatus": [
+    { "statusCode": "PENDING", "statusName": "Pendiente", "total": 10 }
+  ],
+  "requestsByPriority": [
+    { "priority": "Urgente", "total": 3 }
+  ],
+  "requestsTrend": [
+    { "date": "2026-06-08", "total": 5 }
+  ],
+  "averageResponseTimeHours": 5.3,
+  "averageDeliveryTimeHours": 24.1,
+  "deliveryRate": 0.82,
+  "cancelledCount": 2,
+  "rejectedCount": 4,
+  "urgentCount": 3
+}
+
+CONSULTAS SQL ORIENTATIVAS
+
+Top departamentos:
+SELECT TOP 5
+    D.Id AS DepartmentId,
+    D.Name AS DepartmentName,
+    COUNT(*) AS TotalRequisitions
+FROM Requisitions R
+INNER JOIN Employees E ON R.EmployeeId = E.Id
+INNER JOIN Departments D ON E.DepartmentId = D.Id
+WHERE R.CreatedAt BETWEEN @DateFrom AND @DateTo
+GROUP BY D.Id, D.Name
+ORDER BY TotalRequisitions DESC;
+
+Top materiales:
+SELECT TOP 10
+    COALESCE(M.Id, 0) AS MaterialId,
+    COALESCE(M.Name, RI.ManualMaterialName) AS MaterialName,
+    SUM(RI.QuantityRequested) AS TotalQuantityRequested,
+    COUNT(*) AS TotalLines
+FROM RequisitionItems RI
+INNER JOIN Requisitions R ON RI.RequisitionId = R.Id
+LEFT JOIN Materials M ON RI.MaterialId = M.Id
+WHERE R.CreatedAt BETWEEN @DateFrom AND @DateTo
+GROUP BY COALESCE(M.Id, 0), COALESCE(M.Name, RI.ManualMaterialName)
+ORDER BY TotalQuantityRequested DESC;
+
+Requisiciones por estado:
+SELECT
+    S.Code AS StatusCode,
+    S.Name AS StatusName,
+    COUNT(*) AS Total
+FROM Requisitions R
+INNER JOIN RequisitionStatuses S ON R.StatusId = S.Id
+WHERE R.CreatedAt BETWEEN @DateFrom AND @DateTo
+GROUP BY S.Code, S.Name
+ORDER BY Total DESC;
+
+Requisiciones por prioridad:
+SELECT
+    R.Priority,
+    COUNT(*) AS Total
+FROM Requisitions R
+WHERE R.CreatedAt BETWEEN @DateFrom AND @DateTo
+GROUP BY R.Priority
+ORDER BY Total DESC;
+
+Tendencia diaria:
+SELECT
+    CAST(R.CreatedAt AS DATE) AS Date,
+    COUNT(*) AS Total
+FROM Requisitions R
+WHERE R.CreatedAt BETWEEN @DateFrom AND @DateTo
+GROUP BY CAST(R.CreatedAt AS DATE)
+ORDER BY Date;
+
+Tiempo promedio hasta entrega:
+SELECT
+    AVG(DATEDIFF(MINUTE, R.CreatedAt, R.ClosedAt)) / 60.0 AS AverageDeliveryTimeHours
+FROM Requisitions R
+INNER JOIN RequisitionStatuses S ON R.StatusId = S.Id
+WHERE S.Code = 'DELIVERED'
+  AND R.CreatedAt BETWEEN @DateFrom AND @DateTo;
+
+UI RECOMENDADA
+- Tarjetas para métricas rápidas.
+- Gráfica de barras para top departamentos.
+- Gráfica de barras para top materiales.
+- Gráfica de dona o barras para estados.
+- Línea o barras para tendencia por fecha.
+- Tabla resumen para métricas detalladas.

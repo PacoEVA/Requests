@@ -1,0 +1,125 @@
+﻿FLUJO DEL DASHBOARD DE COMPRAS / ADMIN / SUPERVISOR
+
+OBJETIVO
+Permitir que usuarios internos gestionen requisiciones, revisen métricas y respondan en tiempo real.
+
+1. Login
+- Usuario interno entra a /admin/login.
+- Envía username/password.
+- Backend valida bcrypt.
+- Backend devuelve JWT y datos del usuario.
+- Si RequirePasswordChange = true, debe cambiar contraseña.
+
+2. Dashboard
+- Al entrar se consulta:
+  - /api/admin/dashboard/summary.
+  - /api/admin/dashboard/recent-requisitions.
+  - /api/admin/dashboard/statistics.
+- Se conecta Socket.IO como admin.
+- El usuario entra a room dashboard:admins si tiene rol Admin o Compras.
+
+3. Métricas principales
+Mostrar tarjetas:
+- Pendientes.
+- En revisión.
+- Aprobadas.
+- Rechazadas.
+- Entregadas.
+- Canceladas.
+- Urgentes.
+
+4. Estadísticas DASH-12
+Mostrar:
+- Departamento con más solicitudes.
+- Top 5 departamentos.
+- Material más utilizado.
+- Top 10 materiales por cantidad solicitada.
+- Requisiciones por estado.
+- Requisiciones por prioridad.
+- Tendencia por fecha.
+- Tiempo promedio de respuesta.
+- Tiempo promedio de entrega.
+- Porcentaje de entrega.
+
+5. Listado de requisiciones
+- Tabla con:
+  - Código.
+  - Empleado.
+  - Departamento.
+  - Fecha.
+  - Prioridad.
+  - Estado.
+  - Responsable.
+  - Acciones.
+- Filtros:
+  - Estado.
+  - Fecha.
+  - Departamento.
+  - Prioridad.
+  - Empleado.
+  - Código.
+  - Material.
+
+6. Detalle de requisición
+Mostrar:
+- Datos del empleado.
+- Código.
+- Estado actual.
+- Prioridad.
+- Comentario general.
+- Items.
+- Cantidad solicitada.
+- Cantidad aprobada.
+- Cantidad entregada.
+- Comentarios.
+- Historial.
+
+7. Acciones principales
+- Marcar en revisión.
+- Aprobar.
+- Rechazar con motivo obligatorio.
+- En compra.
+- Lista para entregar.
+- Entregar.
+- Cancelar con motivo.
+- Asignar responsable.
+- Comentar.
+
+8. Cambio de estado
+- Usuario ejecuta acción.
+- Frontend llama PATCH /api/admin/requisitions/:id/status.
+- Backend valida rol y transición.
+- Backend actualiza estado.
+- Backend guarda historial.
+- Backend crea notificación para empleado.
+- Backend emite requisition:statusChanged.
+- Dashboard actualiza tabla y contadores.
+
+9. Entrega
+- Usuario indica cantidades entregadas.
+- Si la entrega es completa, estado Entregada.
+- Si es parcial, estado Entrega parcial.
+- Si hay inventario local, se descuenta stock.
+- Si hay stock bajo, se crea alerta.
+
+10. Comentarios
+- Usuario interno puede comentar.
+- El empleado recibe notificación en tiempo real.
+
+11. Usuarios internos
+- Admin puede crear, editar, activar/desactivar usuarios.
+- Admin puede restablecer contraseña.
+- Roles permitidos: Admin, Compras, Supervisor.
+
+12. Materiales
+- Admin o Compras puede gestionar catálogo.
+- Materiales se gestionan localmente.
+
+13. Departamentos
+- Admin puede gestionar departamentos.
+- No hay sucursales.
+
+14. Inventario
+- Ver stock.
+- Ver stock bajo.
+- Ajustar stock local.

@@ -1,0 +1,13 @@
+INTEGRACIÓN SAP BUSINESS ONE PAUSADA TEMPORALMENTE
+
+La integración con SAP Business One queda removida temporalmente de esta implementación.
+
+Estado actual requerido:
+- El inventario debe funcionar solamente con la base de datos local de Requests.
+- No crear módulo backend sap.
+- No crear endpoints /api/admin/sap.
+- No crear tabla SapSyncLog.
+- No agregar variables de entorno SAP.
+- No mostrar acciones de sincronización SAP en el frontend.
+
+Este archivo queda como marcador histórico para retomar la integración más adelante si el usuario la vuelve a solicitar explícitamente.

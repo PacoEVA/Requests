@@ -1,0 +1,30 @@
+version: 2.1
+
+orbs:
+  node: circleci/node@5.2.0
+
+jobs:
+  verify:
+    docker:
+      - image: cimg/node:20.19
+    steps:
+      - checkout
+      - node/install-packages:
+          pkg-manager: npm
+      - run:
+          name: Typecheck
+          command: npm run lint --workspaces
+      - run:
+          name: Tests
+          command: npm run test --workspaces
+      - run:
+          name: Build
+          command: npm run build --workspaces
+      - run:
+          name: Dependency security audit
+          command: npm audit --workspaces --audit-level=moderate
+
+workflows:
+  requests-security-checks:
+    jobs:
+      - verify
