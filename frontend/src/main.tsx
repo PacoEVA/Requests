@@ -5,6 +5,7 @@ import { App } from "./App";
 import { AuthProvider } from "./contexts/AuthContext";
 import { EmployeeProvider } from "./contexts/EmployeeContext";
 import { SocketProvider } from "./contexts/SocketContext";
+import "bootstrap/dist/css/bootstrap.min.css";
 import "./styles.css";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(

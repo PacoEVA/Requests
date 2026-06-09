@@ -20,10 +20,16 @@ export function AdminShell() {
     <div className="app-shell admin-shell">
       <aside className="sidebar">
         <div className="brand-block">
-          <strong>Compras</strong>
-          <span>{user?.fullName}</span>
+          <div className="brand-title">
+            <span className="brand-mark">R</span>
+            <div>
+              <strong>Compras</strong>
+              <span>{user?.fullName}</span>
+            </div>
+          </div>
         </div>
         <nav className="nav-list" aria-label="Administración">
+          <span className="nav-section">Operación</span>
           <NavLink to="/admin/dashboard">
             <LayoutDashboard size={18} /> Dashboard
           </NavLink>
@@ -36,6 +42,7 @@ export function AdminShell() {
           <NavLink to="/admin/departments">
             <Workflow size={18} /> Departamentos
           </NavLink>
+          <span className="nav-section">Administración</span>
           <NavLink to="/admin/users">
             <Users size={18} /> Usuarios
           </NavLink>

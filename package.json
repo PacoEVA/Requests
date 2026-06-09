@@ -27,5 +27,8 @@
     "concurrently": "^10.0.3",
     "cross-env": "^10.1.0",
     "kill-port": "^2.0.1"
+  },
+  "dependencies": {
+    "bootstrap": "^5.3.8"
   }
 }

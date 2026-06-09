@@ -9,10 +9,16 @@ export function EmployeeShell() {
     <div className="app-shell employee-shell">
       <aside className="sidebar">
         <div className="brand-block">
-          <strong>Requests</strong>
-          <span>{employee?.departmentName ?? "Empleado"}</span>
+          <div className="brand-title">
+            <span className="brand-mark">R</span>
+            <div>
+              <strong>Requests</strong>
+              <span>{employee?.departmentName ?? "Empleado"}</span>
+            </div>
+          </div>
         </div>
         <nav className="nav-list" aria-label="Empleado">
+          <span className="nav-section">Solicitudes</span>
           <NavLink to="/employee">
             <Home size={18} /> Inicio
           </NavLink>

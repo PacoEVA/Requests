@@ -24,7 +24,10 @@ export function CreateRequisitionPage() {
   const [message, setMessage] = useState("");
 
   useEffect(() => {
-    materialService.publicList().then((response) => setMaterials(response.materials)).catch(() => setMaterials([]));
+    materialService
+      .publicList()
+      .then((response) => setMaterials(response.materials))
+      .catch(() => setMaterials([]));
   }, []);
 
   function updateItem(index: number, patch: Partial<RequisitionItemDraft>) {
@@ -54,90 +57,138 @@ export function CreateRequisitionPage() {
   return (
     <>
       <PageHeader title="Nueva requisición" eyebrow="Material gastable" />
-      <form className="surface form-grid wide" onSubmit={onSubmit}>
-        <label>
-          Prioridad
-          <select value={priority} onChange={(event) => setPriority(event.target.value as RequisitionPriority)}>
-            <option>Baja</option>
-            <option>Media</option>
-            <option>Alta</option>
-            <option>Urgente</option>
-          </select>
-        </label>
-        <label className="span-2">
-          Comentario general
-          <textarea value={generalComment} onChange={(event) => setGeneralComment(event.target.value)} rows={3} />
-        </label>
-        <div className="span-2 item-list">
-          {items.map((item, index) => (
-            <fieldset className="line-item" key={index}>
-              <legend>Material {index + 1}</legend>
-              <label>
-                Catálogo
-                <select
-                  value={item.materialId ?? ""}
-                  onChange={(event) =>
-                    updateItem(index, {
-                      materialId: Number(event.target.value) || undefined,
-                      manualMaterialName: ""
-                    })
-                  }
-                >
-                  <option value="">Material manual</option>
-                  {materials.map((material) => (
-                    <option key={recordId(material)} value={recordId(material)}>
-                      {recordName(material)}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label>
-                Material manual
-                <input
-                  value={item.manualMaterialName ?? ""}
-                  disabled={Boolean(item.materialId)}
-                  onChange={(event) => updateItem(index, { manualMaterialName: event.target.value })}
-                />
-              </label>
-              <label>
-                Cantidad
-                <input
-                  min="0.01"
-                  step="0.01"
-                  type="number"
-                  value={item.quantityRequested}
-                  onChange={(event) => updateItem(index, { quantityRequested: Number(event.target.value) })}
-                />
-              </label>
-              <label>
-                Unidad
-                <input
-                  value={item.unitOfMeasure ?? ""}
-                  onChange={(event) => updateItem(index, { unitOfMeasure: event.target.value })}
-                />
-              </label>
-              <label className="span-2">
-                Observación
-                <input value={item.comment ?? ""} onChange={(event) => updateItem(index, { comment: event.target.value })} />
-              </label>
-              <button
-                className="icon-button danger"
-                type="button"
-                aria-label="Eliminar material"
-                title="Eliminar material"
-                onClick={() => setItems((current) => current.filter((_, itemIndex) => itemIndex !== index))}
-                disabled={items.length === 1}
-              >
-                <Trash2 size={18} />
-              </button>
-            </fieldset>
-          ))}
+      <form className="surface requisition-form" onSubmit={onSubmit}>
+        <div className="row g-3 mb-4">
+          <div className="col-12 col-md-4">
+            <label className="form-label" htmlFor="requisition-priority">
+              Prioridad
+            </label>
+            <select
+              id="requisition-priority"
+              className="form-select"
+              value={priority}
+              onChange={(event) => setPriority(event.target.value as RequisitionPriority)}
+            >
+              <option>Baja</option>
+              <option>Media</option>
+              <option>Alta</option>
+              <option>Urgente</option>
+            </select>
+          </div>
+          <div className="col-12 col-md-8">
+            <label className="form-label" htmlFor="requisition-comment">
+              Comentario general
+            </label>
+            <textarea
+              id="requisition-comment"
+              className="form-control"
+              value={generalComment}
+              onChange={(event) => setGeneralComment(event.target.value)}
+              rows={3}
+            />
+          </div>
         </div>
-        {message ? <p className="form-error span-2">{message}</p> : null}
-        <div className="button-row span-2">
+
+        <div className="requisition-lines-header">
+          <div>
+            <h2>Líneas de requisición</h2>
+            <p>Inserta una fila por cada material solicitado.</p>
+          </div>
           <button className="secondary-button" type="button" onClick={() => setItems([...items, { ...emptyItem }])}>
-            <Plus size={18} /> Agregar material
+            <Plus size={18} /> Insertar línea
           </button>
+        </div>
+
+        <div className="table-responsive requisition-lines-shell">
+          <table className="table table-hover align-middle requisition-lines-table mb-0">
+            <thead>
+              <tr>
+                <th className="line-number">#</th>
+                <th>Material de catálogo</th>
+                <th>Material manual</th>
+                <th>Cantidad</th>
+                <th>Unidad</th>
+                <th>Observación</th>
+                <th className="line-actions">Acción</th>
+              </tr>
+            </thead>
+            <tbody>
+              {items.map((item, index) => (
+                <tr key={index}>
+                  <td className="line-number">{index + 1}</td>
+                  <td>
+                    <select
+                      className="form-select form-select-sm"
+                      value={item.materialId ?? ""}
+                      onChange={(event) =>
+                        updateItem(index, {
+                          materialId: Number(event.target.value) || undefined,
+                          manualMaterialName: ""
+                        })
+                      }
+                    >
+                      <option value="">Material manual</option>
+                      {materials.map((material) => (
+                        <option key={recordId(material)} value={recordId(material)}>
+                          {recordName(material)}
+                        </option>
+                      ))}
+                    </select>
+                  </td>
+                  <td>
+                    <input
+                      className="form-control form-control-sm"
+                      value={item.manualMaterialName ?? ""}
+                      disabled={Boolean(item.materialId)}
+                      placeholder="Nombre del material"
+                      onChange={(event) => updateItem(index, { manualMaterialName: event.target.value })}
+                    />
+                  </td>
+                  <td>
+                    <input
+                      className="form-control form-control-sm text-end"
+                      min="0.01"
+                      step="0.01"
+                      type="number"
+                      value={item.quantityRequested}
+                      onChange={(event) => updateItem(index, { quantityRequested: Number(event.target.value) })}
+                    />
+                  </td>
+                  <td>
+                    <input
+                      className="form-control form-control-sm"
+                      value={item.unitOfMeasure ?? ""}
+                      onChange={(event) => updateItem(index, { unitOfMeasure: event.target.value })}
+                    />
+                  </td>
+                  <td>
+                    <input
+                      className="form-control form-control-sm"
+                      value={item.comment ?? ""}
+                      placeholder="Detalle opcional"
+                      onChange={(event) => updateItem(index, { comment: event.target.value })}
+                    />
+                  </td>
+                  <td className="line-actions">
+                    <button
+                      className="icon-button danger"
+                      type="button"
+                      aria-label="Eliminar línea"
+                      title="Eliminar línea"
+                      onClick={() => setItems((current) => current.filter((_, itemIndex) => itemIndex !== index))}
+                      disabled={items.length === 1}
+                    >
+                      <Trash2 size={18} />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {message ? <p className="form-error mt-3">{message}</p> : null}
+        <div className="button-row justify-content-end mt-4">
           <button className="primary-button" type="submit">
             <Send size={18} /> Enviar requisición
           </button>

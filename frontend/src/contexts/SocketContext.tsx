@@ -3,7 +3,7 @@ import { io, type Socket } from "socket.io-client";
 import { useAuth } from "./AuthContext";
 import { useEmployee } from "./EmployeeContext";
 
-const SOCKET_URL = import.meta.env.VITE_SOCKET_URL ?? "http://localhost:4000";
+const SOCKET_URL = import.meta.env.VITE_SOCKET_URL ?? "http://localhost:4100";
 
 const SocketContext = createContext<Socket | null>(null);
 
