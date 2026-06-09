@@ -13,7 +13,10 @@ export function MaterialsPage() {
 
   function reload() {
     if (!token) return;
-    materialService.adminList(token).then((response) => setMaterials(response.materials)).catch(() => setMaterials([]));
+    materialService
+      .adminList(token)
+      .then((response) => setMaterials(response.materials))
+      .catch(() => setMaterials([]));
   }
 
   useEffect(reload, [token]);
@@ -29,7 +32,7 @@ export function MaterialsPage() {
   return (
     <>
       <PageHeader title="Materiales" eyebrow="Catálogo" />
-      <section className="split-grid">
+      <section className="stack-layout">
         <form className="surface form-grid" onSubmit={onSubmit}>
           <h2 className="span-2">
             <Package size={18} /> Nuevo material local
@@ -46,6 +49,7 @@ export function MaterialsPage() {
             <Plus size={18} /> Crear material
           </button>
         </form>
+
         <div className="surface">
           <h2>Listado</h2>
           <div className="data-table compact-table">

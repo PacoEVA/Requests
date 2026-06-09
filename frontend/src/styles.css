@@ -588,10 +588,31 @@ textarea {
 
 .split-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(320px, 0.72fr);
+  grid-template-columns: minmax(0, 1.45fr) minmax(360px, 0.75fr);
   gap: 18px;
+  width: 100%;
   max-width: 1320px;
   margin: 0 auto;
+}
+
+.split-grid > .surface {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+}
+
+.stack-layout {
+  display: grid;
+  gap: 18px;
+  width: 100%;
+  max-width: 1320px;
+  margin: 0 auto;
+}
+
+.stack-layout > .surface {
+  width: 100%;
+  max-width: none;
+  margin: 0;
 }
 
 .detail-layout {

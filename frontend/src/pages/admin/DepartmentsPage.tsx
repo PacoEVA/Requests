@@ -13,7 +13,10 @@ export function DepartmentsPage() {
 
   function reload() {
     if (!token) return;
-    adminService.departments(token).then((response) => setDepartments(response.departments)).catch(() => setDepartments([]));
+    adminService
+      .departments(token)
+      .then((response) => setDepartments(response.departments))
+      .catch(() => setDepartments([]));
   }
 
   useEffect(reload, [token]);
@@ -29,7 +32,7 @@ export function DepartmentsPage() {
   return (
     <>
       <PageHeader title="Departamentos" eyebrow="Catálogo interno" />
-      <section className="split-grid">
+      <section className="stack-layout">
         <form className="surface form-grid" onSubmit={onSubmit}>
           <h2 className="span-2">
             <Workflow size={18} /> Nuevo departamento
@@ -46,6 +49,7 @@ export function DepartmentsPage() {
             <Plus size={18} /> Crear departamento
           </button>
         </form>
+
         <div className="surface">
           <h2>Listado</h2>
           <div className="data-table compact-table">
@@ -60,7 +64,7 @@ export function DepartmentsPage() {
                 {departments.map((department) => (
                   <tr key={recordId(department)}>
                     <td>{recordName(department)}</td>
-                    <td>{String(recordValue<boolean>(department as Record<string, unknown>, "isActive", "IsActive", true))}</td>
+                    <td>{recordValue<boolean>(department as Record<string, unknown>, "isActive", "IsActive", true) ? "Sí" : "No"}</td>
                   </tr>
                 ))}
               </tbody>

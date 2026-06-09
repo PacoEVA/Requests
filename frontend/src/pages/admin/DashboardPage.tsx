@@ -45,6 +45,8 @@ export function DashboardPage() {
                 <tr>
                   <th>Código</th>
                   <th>Empleado</th>
+                  <th>Departamento</th>
+                  <th>Prioridad</th>
                   <th>Estado</th>
                 </tr>
               </thead>
@@ -53,6 +55,8 @@ export function DashboardPage() {
                   <tr key={recordValue<number>(item as Record<string, unknown>, "id", "Id", 0)}>
                     <td>{recordValue<string>(item as Record<string, unknown>, "code", "Code", "")}</td>
                     <td>{recordValue<string>(item as Record<string, unknown>, "employeeName", "EmployeeName", "")}</td>
+                    <td>{recordValue<string>(item as Record<string, unknown>, "departmentName", "DepartmentName", "")}</td>
+                    <td>{recordValue<string>(item as Record<string, unknown>, "Priority", "PriorityName", "")}</td>
                     <td>{recordValue<string>(item as Record<string, unknown>, "statusName", "StatusName", "")}</td>
                   </tr>
                 ))}
