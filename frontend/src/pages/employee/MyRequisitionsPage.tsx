@@ -1,22 +1,45 @@
 import { Search } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { PageHeader } from "../../components/common/PageHeader";
 import { StatusBadge } from "../../components/common/StatusBadge";
 import { useEmployee } from "../../contexts/EmployeeContext";
+import { useSocket } from "../../contexts/SocketContext";
 import { requisitionService } from "../../services/requisition.service";
 import type { RequisitionSummary } from "../../types/requisition.types";
 import { recordValue } from "../../utils/record";
 
 export function MyRequisitionsPage() {
   const { employeeToken } = useEmployee();
+  const socket = useSocket();
   const [requisitions, setRequisitions] = useState<RequisitionSummary[]>([]);
   const [search, setSearch] = useState("");
 
-  useEffect(() => {
+  const loadRequisitions = useCallback(() => {
     if (!employeeToken) return;
     requisitionService.my(employeeToken).then((response) => setRequisitions(response.requisitions)).catch(() => setRequisitions([]));
   }, [employeeToken]);
+
+  useEffect(() => {
+    loadRequisitions();
+  }, [loadRequisitions]);
+
+  useEffect(() => {
+    if (!socket || !employeeToken) return;
+
+    const refresh = () => loadRequisitions();
+    socket.on("requisition:created", refresh);
+    socket.on("requisition:updated", refresh);
+    socket.on("requisition:statusChanged", refresh);
+    socket.on("requisition:cancelled", refresh);
+
+    return () => {
+      socket.off("requisition:created", refresh);
+      socket.off("requisition:updated", refresh);
+      socket.off("requisition:statusChanged", refresh);
+      socket.off("requisition:cancelled", refresh);
+    };
+  }, [employeeToken, loadRequisitions, socket]);
 
   const filtered = useMemo(
     () =>

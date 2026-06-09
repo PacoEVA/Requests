@@ -1,4 +1,4 @@
-import { dashboardRepository } from "./dashboard.repository";
+import { dashboardRepository, type DashboardStatisticFilters } from "./dashboard.repository";
 
 export class DashboardService {
   summary() {
@@ -9,8 +9,8 @@ export class DashboardService {
     return dashboardRepository.recentRequisitions();
   }
 
-  statistics() {
-    return dashboardRepository.statistics();
+  statistics(filters: DashboardStatisticFilters = {}) {
+    return dashboardRepository.statistics(filters);
   }
 }
 

@@ -26,6 +26,8 @@ export interface RequisitionFilters {
   materialSearch?: string;
   page?: number;
   pageSize?: number;
+  sortBy?: string;
+  sortDirection?: string;
 }
 
 export interface StatusChangeInput {
@@ -43,4 +45,14 @@ export interface DeliverInput {
     quantityDelivered: number;
   }>;
   comment?: string;
+}
+
+export interface RequisitionMeta {
+  id: number;
+  code: string;
+  employeeId: number;
+  statusCode: string;
+  statusName: string;
+  statusId: number;
+  isFinal: boolean;
 }

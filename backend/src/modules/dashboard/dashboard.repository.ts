@@ -1,4 +1,23 @@
-import { getDbPool } from "../../config/db";
+import { getDbPool, sql } from "../../config/db";
+
+export interface DashboardStatisticFilters {
+  dateFrom?: string;
+  dateTo?: string;
+}
+
+function nullableDate(value: unknown, endOfDay = false) {
+  const text = typeof value === "string" ? value.trim() : "";
+  if (!text) return null;
+
+  const date = new Date(text);
+  if (Number.isNaN(date.getTime())) return null;
+
+  if (endOfDay && /^\d{4}-\d{2}-\d{2}$/.test(text)) {
+    date.setUTCHours(23, 59, 59, 999);
+  }
+
+  return date;
+}
 
 export class DashboardRepository {
   async summary() {
@@ -52,33 +71,49 @@ export class DashboardRepository {
     return result.recordset;
   }
 
-  async statistics() {
+  async statistics(filters: DashboardStatisticFilters = {}) {
     const pool = await getDbPool();
-    const result = await pool.query(`
+    const request = pool
+      .request()
+      .input("DateFrom", sql.DateTime2, nullableDate(filters.dateFrom))
+      .input("DateTo", sql.DateTime2, nullableDate(filters.dateTo, true));
+
+    const result = await request.query(`
       SELECT TOP 5 D.Name, COUNT(*) AS Total
       FROM Requisitions R
       INNER JOIN Employees E ON R.EmployeeId = E.Id
       INNER JOIN Departments D ON E.DepartmentId = D.Id
+      WHERE (@DateFrom IS NULL OR R.CreatedAt >= @DateFrom)
+        AND (@DateTo IS NULL OR R.CreatedAt <= @DateTo)
       GROUP BY D.Name
       ORDER BY Total DESC;
 
       SELECT TOP 10 COALESCE(M.Name, RI.ManualMaterialName) AS Name, SUM(RI.QuantityRequested) AS TotalQuantity
       FROM RequisitionItems RI
+      INNER JOIN Requisitions R ON RI.RequisitionId = R.Id
       LEFT JOIN Materials M ON RI.MaterialId = M.Id
+      WHERE (@DateFrom IS NULL OR R.CreatedAt >= @DateFrom)
+        AND (@DateTo IS NULL OR R.CreatedAt <= @DateTo)
       GROUP BY COALESCE(M.Name, RI.ManualMaterialName)
       ORDER BY TotalQuantity DESC;
 
       SELECT S.Name, COUNT(*) AS Total
       FROM Requisitions R
       INNER JOIN RequisitionStatuses S ON R.StatusId = S.Id
+      WHERE (@DateFrom IS NULL OR R.CreatedAt >= @DateFrom)
+        AND (@DateTo IS NULL OR R.CreatedAt <= @DateTo)
       GROUP BY S.Name;
 
       SELECT Priority, COUNT(*) AS Total
       FROM Requisitions
+      WHERE (@DateFrom IS NULL OR CreatedAt >= @DateFrom)
+        AND (@DateTo IS NULL OR CreatedAt <= @DateTo)
       GROUP BY Priority;
 
       SELECT CONVERT(date, CreatedAt) AS Date, COUNT(*) AS Total
       FROM Requisitions
+      WHERE (@DateFrom IS NULL OR CreatedAt >= @DateFrom)
+        AND (@DateTo IS NULL OR CreatedAt <= @DateTo)
       GROUP BY CONVERT(date, CreatedAt)
       ORDER BY Date ASC;
 
@@ -87,7 +122,9 @@ export class DashboardRepository {
         AVG(CASE WHEN ClosedAt IS NOT NULL THEN DATEDIFF(hour, CreatedAt, ClosedAt) END) AS AverageDeliveryTimeHours,
         CAST(SUM(CASE WHEN S.Code = 'DELIVERED' THEN 1 ELSE 0 END) AS float) / NULLIF(COUNT(*), 0) AS DeliveryRate
       FROM Requisitions R
-      INNER JOIN RequisitionStatuses S ON R.StatusId = S.Id;
+      INNER JOIN RequisitionStatuses S ON R.StatusId = S.Id
+      WHERE (@DateFrom IS NULL OR R.CreatedAt >= @DateFrom)
+        AND (@DateTo IS NULL OR R.CreatedAt <= @DateTo);
     `);
 
     const recordsets = result.recordsets as unknown as Array<Array<Record<string, unknown>>>;

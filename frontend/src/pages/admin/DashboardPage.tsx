@@ -1,8 +1,9 @@
 import { AlertTriangle, CheckCircle2, Clock3, PackageCheck, PackageX, TimerReset } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { MetricCard } from "../../components/common/MetricCard";
 import { PageHeader } from "../../components/common/PageHeader";
 import { useAuth } from "../../contexts/AuthContext";
+import { useSocket } from "../../contexts/SocketContext";
 import { dashboardService } from "../../services/dashboard.service";
 import type { DashboardStatistics, DashboardSummary } from "../../types/dashboard.types";
 import type { RequisitionSummary } from "../../types/requisition.types";
@@ -14,16 +15,40 @@ const emptySummary: DashboardSummary = {
 
 export function DashboardPage() {
   const { token } = useAuth();
+  const socket = useSocket();
   const [summary, setSummary] = useState<DashboardSummary>(emptySummary);
   const [recent, setRecent] = useState<RequisitionSummary[]>([]);
   const [stats, setStats] = useState<DashboardStatistics | null>(null);
 
-  useEffect(() => {
+  const loadDashboard = useCallback(() => {
     if (!token) return;
     dashboardService.summary(token).then(setSummary).catch(() => setSummary(emptySummary));
     dashboardService.recent(token).then((response) => setRecent(response.requisitions)).catch(() => setRecent([]));
     dashboardService.statistics(token).then(setStats).catch(() => setStats(null));
   }, [token]);
+
+  useEffect(() => {
+    loadDashboard();
+  }, [loadDashboard]);
+
+  useEffect(() => {
+    if (!socket || !token) return;
+
+    const refresh = () => loadDashboard();
+    socket.on("dashboard:summaryUpdated", refresh);
+    socket.on("requisition:created", refresh);
+    socket.on("requisition:updated", refresh);
+    socket.on("requisition:statusChanged", refresh);
+    socket.on("requisition:cancelled", refresh);
+
+    return () => {
+      socket.off("dashboard:summaryUpdated", refresh);
+      socket.off("requisition:created", refresh);
+      socket.off("requisition:updated", refresh);
+      socket.off("requisition:statusChanged", refresh);
+      socket.off("requisition:cancelled", refresh);
+    };
+  }, [loadDashboard, socket, token]);
 
   return (
     <>

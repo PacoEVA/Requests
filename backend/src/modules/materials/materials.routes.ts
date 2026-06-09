@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { z } from "zod";
-import { authenticateInternal } from "../../middlewares/auth.middleware";
+import { authenticateInternal, requireRole } from "../../middlewares/auth.middleware";
 import { validate } from "../../middlewares/validation.middleware";
 import { materialsController } from "./materials.controller";
 
@@ -26,15 +26,15 @@ materialsRouter.get("/", materialsController.listPublic);
 
 adminMaterialsRouter.use(authenticateInternal);
 adminMaterialsRouter.get("/", materialsController.listAdmin);
-adminMaterialsRouter.post("/", validate(materialSchema), materialsController.create);
-adminMaterialsRouter.put("/:id", validate(materialSchema), materialsController.update);
-adminMaterialsRouter.patch("/:id/deactivate", materialsController.deactivate);
-adminMaterialsRouter.patch("/:id/activate", materialsController.activate);
+adminMaterialsRouter.post("/", requireRole("Admin", "Compras"), validate(materialSchema), materialsController.create);
+adminMaterialsRouter.put("/:id", requireRole("Admin", "Compras"), validate(materialSchema), materialsController.update);
+adminMaterialsRouter.patch("/:id/deactivate", requireRole("Admin", "Compras"), materialsController.deactivate);
+adminMaterialsRouter.patch("/:id/activate", requireRole("Admin", "Compras"), materialsController.activate);
 
 materialCategoriesRouter.get("/", materialsController.listCategoriesPublic);
 
 adminMaterialCategoriesRouter.use(authenticateInternal);
 adminMaterialCategoriesRouter.get("/", materialsController.listCategoriesAdmin);
-adminMaterialCategoriesRouter.post("/", validate(categorySchema), materialsController.createCategory);
-adminMaterialCategoriesRouter.put("/:id", validate(categorySchema), materialsController.updateCategory);
-adminMaterialCategoriesRouter.patch("/:id/deactivate", materialsController.deactivateCategory);
+adminMaterialCategoriesRouter.post("/", requireRole("Admin", "Compras"), validate(categorySchema), materialsController.createCategory);
+adminMaterialCategoriesRouter.put("/:id", requireRole("Admin", "Compras"), validate(categorySchema), materialsController.updateCategory);
+adminMaterialCategoriesRouter.patch("/:id/deactivate", requireRole("Admin", "Compras"), materialsController.deactivateCategory);

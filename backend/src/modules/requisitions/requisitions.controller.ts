@@ -42,8 +42,8 @@ export class RequisitionsController {
   cancelMine: RequestHandler = async (req, res, next) => {
     try {
       if (!req.employee) throw new AppError("Empleado no identificado", 401, "EMPLOYEE_REQUIRED");
-      await requisitionsService.cancelMine(req.employee, numericId(req.params.id), req.body.reason);
-      res.json({ ok: true });
+      const requisition = await requisitionsService.cancelMine(req.employee, numericId(req.params.id), req.body.reason);
+      res.json({ ok: true, requisition });
     } catch (error) {
       next(error);
     }
@@ -70,8 +70,8 @@ export class RequisitionsController {
   updateStatus: RequestHandler = async (req, res, next) => {
     try {
       if (!req.user) throw new AppError("Usuario no autenticado", 401, "AUTH_REQUIRED");
-      await requisitionsService.updateStatus(req.user, numericId(req.params.id), req.body);
-      res.json({ ok: true });
+      const requisition = await requisitionsService.updateStatus(req.user, numericId(req.params.id), req.body);
+      res.json({ ok: true, requisition });
     } catch (error) {
       next(error);
     }
@@ -80,8 +80,8 @@ export class RequisitionsController {
   assign: RequestHandler = async (req, res, next) => {
     try {
       if (!req.user) throw new AppError("Usuario no autenticado", 401, "AUTH_REQUIRED");
-      await requisitionsService.assign(req.user, numericId(req.params.id), req.body.assignedToUserId);
-      res.json({ ok: true });
+      const requisition = await requisitionsService.assign(req.user, numericId(req.params.id), req.body.assignedToUserId);
+      res.json({ ok: true, requisition });
     } catch (error) {
       next(error);
     }
@@ -90,8 +90,8 @@ export class RequisitionsController {
   deliver: RequestHandler = async (req, res, next) => {
     try {
       if (!req.user) throw new AppError("Usuario no autenticado", 401, "AUTH_REQUIRED");
-      await requisitionsService.deliver(req.user, numericId(req.params.id), req.body);
-      res.json({ ok: true });
+      const requisition = await requisitionsService.deliver(req.user, numericId(req.params.id), req.body);
+      res.json({ ok: true, requisition });
     } catch (error) {
       next(error);
     }
@@ -99,7 +99,14 @@ export class RequisitionsController {
 
   listComments: RequestHandler = async (req, res, next) => {
     try {
-      const comments = await requisitionsService.listComments(numericId(req.params.id));
+      const requisitionId = numericId(req.params.id);
+      const comments = req.employee
+        ? await requisitionsService.listCommentsForEmployee(req.employee, requisitionId)
+        : req.user
+          ? await requisitionsService.listCommentsForAdmin(requisitionId)
+          : null;
+
+      if (!comments) throw new AppError("Autenticacion requerida", 401, "AUTH_REQUIRED");
       res.json({ comments });
     } catch (error) {
       next(error);

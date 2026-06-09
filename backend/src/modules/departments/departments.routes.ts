@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { z } from "zod";
-import { authenticateInternal } from "../../middlewares/auth.middleware";
+import { authenticateInternal, requireRole } from "../../middlewares/auth.middleware";
 import { validate } from "../../middlewares/validation.middleware";
 import { departmentsController } from "./departments.controller";
 
@@ -16,7 +16,7 @@ departmentsRouter.get("/", departmentsController.listPublic);
 
 adminDepartmentsRouter.use(authenticateInternal);
 adminDepartmentsRouter.get("/", departmentsController.listAdmin);
-adminDepartmentsRouter.post("/", validate(departmentSchema), departmentsController.create);
-adminDepartmentsRouter.put("/:id", validate(departmentSchema), departmentsController.update);
-adminDepartmentsRouter.patch("/:id/deactivate", departmentsController.deactivate);
-adminDepartmentsRouter.patch("/:id/activate", departmentsController.activate);
+adminDepartmentsRouter.post("/", requireRole("Admin"), validate(departmentSchema), departmentsController.create);
+adminDepartmentsRouter.put("/:id", requireRole("Admin"), validate(departmentSchema), departmentsController.update);
+adminDepartmentsRouter.patch("/:id/deactivate", requireRole("Admin"), departmentsController.deactivate);
+adminDepartmentsRouter.patch("/:id/activate", requireRole("Admin"), departmentsController.activate);

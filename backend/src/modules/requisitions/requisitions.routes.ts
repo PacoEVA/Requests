@@ -1,7 +1,8 @@
 import { Router } from "express";
 import { z } from "zod";
-import { authenticateInternal } from "../../middlewares/auth.middleware";
+import { authenticateInternal, requireRole } from "../../middlewares/auth.middleware";
 import { authenticateEmployee } from "../../middlewares/employee.middleware";
+import { authenticateEmployeeOrInternal } from "../../middlewares/requisition-access.middleware";
 import { validate } from "../../middlewares/validation.middleware";
 import { requisitionsController } from "./requisitions.controller";
 
@@ -67,14 +68,14 @@ requisitionsRouter.post("/", authenticateEmployee, validate(createRequisitionSch
 requisitionsRouter.get("/my", authenticateEmployee, requisitionsController.listMine);
 requisitionsRouter.get("/my/:id", authenticateEmployee, requisitionsController.getMine);
 requisitionsRouter.patch("/my/:id/cancel", authenticateEmployee, validate(cancelSchema), requisitionsController.cancelMine);
-requisitionsRouter.get("/:id/comments", authenticateEmployee, requisitionsController.listComments);
-requisitionsRouter.post("/:id/comments", authenticateEmployee, validate(commentSchema), requisitionsController.addComment);
+requisitionsRouter.get("/:id/comments", authenticateEmployeeOrInternal, requisitionsController.listComments);
+requisitionsRouter.post("/:id/comments", authenticateEmployeeOrInternal, validate(commentSchema), requisitionsController.addComment);
 
 adminRequisitionsRouter.use(authenticateInternal);
 adminRequisitionsRouter.get("/", requisitionsController.listAdmin);
 adminRequisitionsRouter.get("/:id", requisitionsController.getAdmin);
-adminRequisitionsRouter.patch("/:id/status", validate(statusSchema), requisitionsController.updateStatus);
-adminRequisitionsRouter.patch("/:id/assign", validate(assignSchema), requisitionsController.assign);
-adminRequisitionsRouter.patch("/:id/deliver", validate(deliverSchema), requisitionsController.deliver);
+adminRequisitionsRouter.patch("/:id/status", requireRole("Admin", "Compras"), validate(statusSchema), requisitionsController.updateStatus);
+adminRequisitionsRouter.patch("/:id/assign", requireRole("Admin", "Compras"), validate(assignSchema), requisitionsController.assign);
+adminRequisitionsRouter.patch("/:id/deliver", requireRole("Admin", "Compras"), validate(deliverSchema), requisitionsController.deliver);
 adminRequisitionsRouter.get("/:id/comments", requisitionsController.listComments);
-adminRequisitionsRouter.post("/:id/comments", validate(commentSchema), requisitionsController.addComment);
+adminRequisitionsRouter.post("/:id/comments", requireRole("Admin", "Compras"), validate(commentSchema), requisitionsController.addComment);

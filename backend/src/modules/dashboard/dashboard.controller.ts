@@ -18,9 +18,9 @@ export class DashboardController {
     }
   };
 
-  statistics: RequestHandler = async (_req, res, next) => {
+  statistics: RequestHandler = async (req, res, next) => {
     try {
-      res.json(await dashboardService.statistics());
+      res.json(await dashboardService.statistics(req.query));
     } catch (error) {
       next(error);
     }
