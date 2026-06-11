@@ -6,6 +6,7 @@ export interface AuthenticatedUser {
   username: string;
   fullName: string;
   role: RoleName;
+  departmentId?: number | null;
   requirePasswordChange: boolean;
 }
 
@@ -15,6 +16,7 @@ export interface InternalUserRecord {
   fullName: string;
   passwordHash: string;
   role: RoleName;
+  departmentId: number | null;
   isActive: boolean;
   requirePasswordChange: boolean;
 }

@@ -27,8 +27,9 @@ const statusOptions = [
 const priorities = ["", "Baja", "Media", "Alta", "Urgente"];
 
 export function RequisitionsPage() {
-  const { token } = useAuth();
+  const { token, user } = useAuth();
   const socket = useSocket();
+  const supervisorDepartmentId = user?.role === "Supervisor" ? String(user.departmentId ?? "") : "";
   const [requisitions, setRequisitions] = useState<RequisitionSummary[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
   const [filters, setFilters] = useState({
@@ -66,6 +67,12 @@ export function RequisitionsPage() {
     if (!token) return;
     adminService.departments(token).then((response) => setDepartments(response.departments)).catch(() => setDepartments([]));
   }, [token]);
+
+  useEffect(() => {
+    if (supervisorDepartmentId) {
+      setFilters((current) => ({ ...current, departmentId: supervisorDepartmentId }));
+    }
+  }, [supervisorDepartmentId]);
 
   useEffect(() => {
     loadRequisitions();
@@ -116,7 +123,11 @@ export function RequisitionsPage() {
           </label>
           <label>
             Departamento
-            <select value={filters.departmentId} onChange={(event) => setFilters({ ...filters, departmentId: event.target.value })}>
+            <select
+              value={filters.departmentId}
+              disabled={Boolean(supervisorDepartmentId)}
+              onChange={(event) => setFilters({ ...filters, departmentId: event.target.value })}
+            >
               <option value="">Todos</option>
               {departments.map((department) => (
                 <option key={recordId(department)} value={recordId(department)}>

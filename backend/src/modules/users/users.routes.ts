@@ -6,15 +6,23 @@ import { usersController } from "./users.controller";
 
 const roleSchema = z.enum(["Admin", "Compras", "Supervisor"]);
 
-const createUserSchema = z.object({
+const userBaseSchema = z.object({
   username: z.string().min(3).max(80),
   fullName: z.string().min(2).max(150),
-  password: z.string().min(8).max(200),
   role: roleSchema,
   departmentId: z.number().int().positive().optional()
 });
 
-const updateUserSchema = createUserSchema.omit({ password: true });
+const requireSupervisorDepartment = {
+  message: "Debe asignar un departamento al supervisor",
+  path: ["departmentId"]
+};
+
+const createUserSchema = userBaseSchema.extend({
+  password: z.string().min(8).max(200)
+}).refine((data) => data.role !== "Supervisor" || Boolean(data.departmentId), requireSupervisorDepartment);
+
+const updateUserSchema = userBaseSchema.refine((data) => data.role !== "Supervisor" || Boolean(data.departmentId), requireSupervisorDepartment);
 
 const resetPasswordSchema = z
   .object({

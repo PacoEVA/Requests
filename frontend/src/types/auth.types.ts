@@ -5,6 +5,7 @@ export interface AuthUser {
   username: string;
   fullName: string;
   role: RoleName;
+  departmentId?: number | null;
   requirePasswordChange: boolean;
 }
 

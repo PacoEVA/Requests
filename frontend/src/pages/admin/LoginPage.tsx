@@ -9,7 +9,8 @@ export function LoginPage() {
   const { login } = useAuth();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [message, setMessage] = useState("");
+  const routeMessage = (location.state as { message?: string } | null)?.message ?? "";
+  const [message, setMessage] = useState(routeMessage);
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
@@ -45,7 +46,7 @@ export function LoginPage() {
             Contraseña
             <input required type="password" value={password} onChange={(event) => setPassword(event.target.value)} />
           </label>
-          {message ? <p className="form-error">{message}</p> : null}
+          {message ? <p className={routeMessage === message ? "form-success" : "form-error"}>{message}</p> : null}
           <button className="primary-button" type="submit">
             <LogIn size={18} /> Entrar
           </button>

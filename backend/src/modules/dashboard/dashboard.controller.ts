@@ -1,18 +1,21 @@
 import type { RequestHandler } from "express";
+import { AppError } from "../../middlewares/error.middleware";
 import { dashboardService } from "./dashboard.service";
 
 export class DashboardController {
-  summary: RequestHandler = async (_req, res, next) => {
+  summary: RequestHandler = async (req, res, next) => {
     try {
-      res.json(await dashboardService.summary());
+      if (!req.user) throw new AppError("Usuario no autenticado", 401, "AUTH_REQUIRED");
+      res.json(await dashboardService.summary(req.user));
     } catch (error) {
       next(error);
     }
   };
 
-  recentRequisitions: RequestHandler = async (_req, res, next) => {
+  recentRequisitions: RequestHandler = async (req, res, next) => {
     try {
-      res.json({ requisitions: await dashboardService.recentRequisitions() });
+      if (!req.user) throw new AppError("Usuario no autenticado", 401, "AUTH_REQUIRED");
+      res.json({ requisitions: await dashboardService.recentRequisitions(req.user) });
     } catch (error) {
       next(error);
     }
@@ -20,7 +23,8 @@ export class DashboardController {
 
   statistics: RequestHandler = async (req, res, next) => {
     try {
-      res.json(await dashboardService.statistics(req.query));
+      if (!req.user) throw new AppError("Usuario no autenticado", 401, "AUTH_REQUIRED");
+      res.json(await dashboardService.statistics(req.user, req.query));
     } catch (error) {
       next(error);
     }

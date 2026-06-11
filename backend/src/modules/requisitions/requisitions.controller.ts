@@ -51,7 +51,8 @@ export class RequisitionsController {
 
   listAdmin: RequestHandler = async (req, res, next) => {
     try {
-      const requisitions = await requisitionsService.listAdmin(req.query);
+      if (!req.user) throw new AppError("Usuario no autenticado", 401, "AUTH_REQUIRED");
+      const requisitions = await requisitionsService.listAdmin(req.user, req.query);
       res.json({ requisitions });
     } catch (error) {
       next(error);
@@ -60,7 +61,8 @@ export class RequisitionsController {
 
   getAdmin: RequestHandler = async (req, res, next) => {
     try {
-      const requisition = await requisitionsService.getAdmin(numericId(req.params.id));
+      if (!req.user) throw new AppError("Usuario no autenticado", 401, "AUTH_REQUIRED");
+      const requisition = await requisitionsService.getAdmin(req.user, numericId(req.params.id));
       res.json({ requisition });
     } catch (error) {
       next(error);
@@ -103,7 +105,7 @@ export class RequisitionsController {
       const comments = req.employee
         ? await requisitionsService.listCommentsForEmployee(req.employee, requisitionId)
         : req.user
-          ? await requisitionsService.listCommentsForAdmin(requisitionId)
+          ? await requisitionsService.listCommentsForAdmin(req.user, requisitionId)
           : null;
 
       if (!comments) throw new AppError("Autenticacion requerida", 401, "AUTH_REQUIRED");

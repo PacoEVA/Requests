@@ -1,7 +1,7 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 import { AdminShell } from "../components/admin/AdminShell";
 import { EmployeeShell } from "../components/employee/EmployeeShell";
-import { AdminProtectedRoute, EmployeeProtectedRoute } from "./ProtectedRoute";
+import { AdminProtectedRoute, AdminRoleRoute, EmployeeProtectedRoute } from "./ProtectedRoute";
 import { CreateRequisitionPage } from "../pages/employee/CreateRequisitionPage";
 import { EmployeeHomePage } from "../pages/employee/EmployeeHomePage";
 import { EmployeeIdentifyPage } from "../pages/employee/EmployeeIdentifyPage";
@@ -39,9 +39,13 @@ export function AppRoutes() {
           <Route path="/admin/dashboard" element={<DashboardPage />} />
           <Route path="/admin/requisitions" element={<RequisitionsPage />} />
           <Route path="/admin/requisitions/:id" element={<RequisitionDetailPage />} />
-          <Route path="/admin/materials" element={<MaterialsPage />} />
-          <Route path="/admin/departments" element={<DepartmentsPage />} />
-          <Route path="/admin/users" element={<UsersPage />} />
+          <Route element={<AdminRoleRoute roles={["Admin", "Compras"]} />}>
+            <Route path="/admin/materials" element={<MaterialsPage />} />
+          </Route>
+          <Route element={<AdminRoleRoute roles={["Admin"]} />}>
+            <Route path="/admin/departments" element={<DepartmentsPage />} />
+            <Route path="/admin/users" element={<UsersPage />} />
+          </Route>
           <Route path="/admin/reports" element={<ReportsPage />} />
         </Route>
       </Route>

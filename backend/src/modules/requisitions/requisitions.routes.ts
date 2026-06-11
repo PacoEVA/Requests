@@ -38,7 +38,7 @@ const statusSchema = z.object({
     .array(
       z.object({
         requisitionItemId: z.number().int().positive(),
-        quantityApproved: z.number().nonnegative().optional()
+        quantityApproved: z.number().positive().optional()
       })
     )
     .optional()

@@ -25,6 +25,10 @@ function recordId(record: Record<string, unknown> | null | undefined) {
   return Number(record?.Id ?? record?.id ?? 0);
 }
 
+function recordNumber(record: Record<string, unknown> | null | undefined, key: string) {
+  return Number(record?.[key] ?? 0);
+}
+
 function recordCode(record: Record<string, unknown> | null | undefined) {
   return String(record?.Code ?? record?.code ?? "");
 }
@@ -49,6 +53,15 @@ function assertManager(user: AuthenticatedUser) {
   if (!MANAGER_ROLES.has(user.role)) {
     throw new AppError("No tiene permiso para gestionar requisiciones", 403, "FORBIDDEN");
   }
+}
+
+function supervisorDepartmentId(user: AuthenticatedUser) {
+  if (user.role !== "Supervisor") return null;
+  const departmentId = Number(user.departmentId ?? 0);
+  if (!departmentId) {
+    throw new AppError("Supervisor sin departamento asignado", 403, "SUPERVISOR_DEPARTMENT_REQUIRED");
+  }
+  return departmentId;
 }
 
 function assertRequisitionFound(meta: RequisitionMeta | null) {
@@ -89,6 +102,10 @@ function assertApprovalItems(inputItems: StatusChangeInput["items"], currentItem
       throw new AppError("Linea de requisicion no encontrada", 404, "REQUISITION_ITEM_NOT_FOUND");
     }
 
+    if (item.quantityApproved !== undefined && item.quantityApproved <= 0) {
+      throw new AppError("La cantidad aprobada debe ser mayor que cero", 400, "INVALID_APPROVED_QUANTITY");
+    }
+
     if (item.quantityApproved !== undefined && item.quantityApproved > current.quantityRequested) {
       throw new AppError("La cantidad aprobada no puede superar la solicitada", 400, "APPROVED_QUANTITY_TOO_HIGH");
     }
@@ -111,15 +128,15 @@ function assertDeliveryItems(input: DeliverInput, currentItems: RequisitionItemR
     }
 
     const deliveryTarget = current.quantityApproved ?? current.quantityRequested;
-    if (item.quantityDelivered < current.quantityDelivered) {
-      throw new AppError("La cantidad entregada no puede disminuir", 400, "DELIVERED_QUANTITY_DECREASED");
+    if (item.quantityDelivered < 0) {
+      throw new AppError("La cantidad a entregar no puede ser negativa", 400, "INVALID_DELIVERY_QUANTITY");
     }
 
-    if (item.quantityDelivered > deliveryTarget) {
+    if (current.quantityDelivered + item.quantityDelivered > deliveryTarget) {
       throw new AppError("La cantidad entregada no puede superar la aprobada o solicitada", 400, "DELIVERED_QUANTITY_TOO_HIGH");
     }
 
-    if (item.quantityDelivered > current.quantityDelivered) {
+    if (item.quantityDelivered > 0) {
       hasNewDelivery = true;
     }
   }
@@ -133,7 +150,7 @@ function deliveryTargetStatus(input: DeliverInput, currentItems: RequisitionItem
   const deliveredByItem = new Map(input.items.map((item) => [item.requisitionItemId, item.quantityDelivered]));
   const allDelivered = currentItems.every((item) => {
     const target = item.quantityApproved ?? item.quantityRequested;
-    const delivered = deliveredByItem.get(item.id) ?? item.quantityDelivered;
+    const delivered = item.quantityDelivered + (deliveredByItem.get(item.id) ?? 0);
     return delivered >= target;
   });
 
@@ -194,12 +211,16 @@ export class RequisitionsService {
     return requisition;
   }
 
-  listAdmin(filters: RequisitionFilters) {
-    return requisitionsRepository.listForAdmin(filters);
+  listAdmin(user: AuthenticatedUser, filters: RequisitionFilters) {
+    const departmentId = supervisorDepartmentId(user);
+    return requisitionsRepository.listForAdmin({
+      ...filters,
+      departmentId: departmentId ?? filters.departmentId
+    });
   }
 
-  async getAdmin(id: number) {
-    const requisition = await requisitionsRepository.findForAdmin(id);
+  async getAdmin(user: AuthenticatedUser, id: number) {
+    const requisition = await requisitionsRepository.findForAdmin(id, supervisorDepartmentId(user) ?? undefined);
     if (!requisition) throw new AppError("Requisicion no encontrada", 404, "REQUISITION_NOT_FOUND");
     return requisition;
   }
@@ -270,8 +291,11 @@ export class RequisitionsService {
     return requisitionsRepository.listComments(id);
   }
 
-  async listCommentsForAdmin(id: number) {
-    assertRequisitionFound(await requisitionsRepository.getMeta(id));
+  async listCommentsForAdmin(user: AuthenticatedUser, id: number) {
+    const requisition = await requisitionsRepository.findForAdmin(id, supervisorDepartmentId(user) ?? undefined);
+    if (!requisition) {
+      throw new AppError("Requisicion no encontrada", 404, "REQUISITION_NOT_FOUND");
+    }
     return requisitionsRepository.listComments(id);
   }
 
@@ -298,6 +322,7 @@ export class RequisitionsService {
   private async afterCreated(requisition: Record<string, unknown> | null) {
     if (!requisition) return;
     const requisitionId = recordId(requisition);
+    const departmentId = recordNumber(requisition, "DepartmentId");
     const code = recordCode(requisition);
     const payload = {
       requisition: {
@@ -317,9 +342,11 @@ export class RequisitionsService {
     ]);
 
     await safeEmit((io) => {
-      io.to("dashboard:admins").to("role:Compras").emit("requisition:created", payload);
+      const target = io.to("dashboard:admins").to("role:Compras");
+      if (departmentId) target.to(`department:${departmentId}`);
+      target.emit("requisition:created", payload);
     });
-    await this.emitDashboardSummary();
+    await this.emitDashboardSummary(departmentId);
   }
 
   private async afterStatusChanged(meta: RequisitionMeta, requisition: Record<string, unknown>, targetStatusCode: string) {
@@ -336,19 +363,27 @@ export class RequisitionsService {
     await this.notifyEmployee(meta.employeeId, meta.id, "Estado actualizado", `${code} cambio a ${newStatusName}`, "STATUS_CHANGED");
 
     await safeEmit((io) => {
-      io.to(`employee:${meta.employeeId}`).to(`requisition:${meta.id}`).to("dashboard:admins").emit("requisition:statusChanged", payload);
+      io.to(`employee:${meta.employeeId}`)
+        .to(`requisition:${meta.id}`)
+        .to("dashboard:admins")
+        .to(`department:${meta.departmentId}`)
+        .emit("requisition:statusChanged", payload);
     });
 
     if (targetStatusCode === "CANCELLED") {
       await safeEmit((io) => {
-        io.to(`employee:${meta.employeeId}`).to(`requisition:${meta.id}`).to("dashboard:admins").emit("requisition:cancelled", {
-          requisitionId: meta.id,
-          code
-        });
+        io.to(`employee:${meta.employeeId}`)
+          .to(`requisition:${meta.id}`)
+          .to("dashboard:admins")
+          .to(`department:${meta.departmentId}`)
+          .emit("requisition:cancelled", {
+            requisitionId: meta.id,
+            code
+          });
       });
     }
 
-    await this.emitDashboardSummary();
+    await this.emitDashboardSummary(meta.departmentId);
   }
 
   private async afterCancelled(meta: RequisitionMeta, requisition: Record<string, unknown>, message: string) {
@@ -357,14 +392,18 @@ export class RequisitionsService {
     await this.notifyRole("Compras", meta.id, "Requisicion cancelada", `${code} fue cancelada`, "REQUISITION_CANCELLED");
 
     await safeEmit((io) => {
-      io.to(`employee:${meta.employeeId}`).to(`requisition:${meta.id}`).to("dashboard:admins").emit("requisition:cancelled", {
-        requisitionId: meta.id,
-        code,
-        previousStatus: meta.statusName,
-        message
-      });
+      io.to(`employee:${meta.employeeId}`)
+        .to(`requisition:${meta.id}`)
+        .to("dashboard:admins")
+        .to(`department:${meta.departmentId}`)
+        .emit("requisition:cancelled", {
+          requisitionId: meta.id,
+          code,
+          previousStatus: meta.statusName,
+          message
+        });
     });
-    await this.emitDashboardSummary();
+    await this.emitDashboardSummary(meta.departmentId);
   }
 
   private async afterAssigned(meta: RequisitionMeta, requisition: Record<string, unknown>, assignedToUserId: number) {
@@ -380,7 +419,7 @@ export class RequisitionsService {
 
     await safeEmit((io) => {
       io.to(`internalUser:${assignedToUserId}`).emit("notification:new", notification);
-      io.to(`internalUser:${assignedToUserId}`).to("dashboard:admins").emit("requisition:assigned", {
+      io.to(`internalUser:${assignedToUserId}`).to("dashboard:admins").to(`department:${meta.departmentId}`).emit("requisition:assigned", {
         requisitionId: meta.id,
         code,
         assignedToUserId
@@ -393,21 +432,29 @@ export class RequisitionsService {
     await this.notifyEmployee(meta.employeeId, meta.id, "Entrega registrada", `${code} cambio a ${result.statusName}`, "DELIVERY_REGISTERED");
 
     await safeEmit((io) => {
-      io.to(`employee:${meta.employeeId}`).to(`requisition:${meta.id}`).to("dashboard:admins").emit("requisition:updated", {
-        requisitionId: meta.id,
-        code
-      });
-      io.to(`employee:${meta.employeeId}`).to(`requisition:${meta.id}`).to("dashboard:admins").emit("requisition:statusChanged", {
-        requisitionId: meta.id,
-        code,
-        previousStatus: meta.statusName,
-        newStatus: result.statusName,
-        message: `Tu requisicion ${code} cambio a ${result.statusName}`
-      });
+      io.to(`employee:${meta.employeeId}`)
+        .to(`requisition:${meta.id}`)
+        .to("dashboard:admins")
+        .to(`department:${meta.departmentId}`)
+        .emit("requisition:updated", {
+          requisitionId: meta.id,
+          code
+        });
+      io.to(`employee:${meta.employeeId}`)
+        .to(`requisition:${meta.id}`)
+        .to("dashboard:admins")
+        .to(`department:${meta.departmentId}`)
+        .emit("requisition:statusChanged", {
+          requisitionId: meta.id,
+          code,
+          previousStatus: meta.statusName,
+          newStatus: result.statusName,
+          message: `Tu requisicion ${code} cambio a ${result.statusName}`
+        });
 
     });
 
-    await this.emitDashboardSummary();
+    await this.emitDashboardSummary(meta.departmentId);
   }
 
   private async afterCommentCreated(meta: RequisitionMeta, comment: Record<string, unknown>, authorName: string, authorType: "EMPLOYEE" | "INTERNAL_USER") {
@@ -429,7 +476,11 @@ export class RequisitionsService {
     }
 
     await safeEmit((io) => {
-      io.to(`employee:${meta.employeeId}`).to(`requisition:${meta.id}`).to("dashboard:admins").emit("comment:created", payload);
+      io.to(`employee:${meta.employeeId}`)
+        .to(`requisition:${meta.id}`)
+        .to("dashboard:admins")
+        .to(`department:${meta.departmentId}`)
+        .emit("comment:created", payload);
     });
   }
 
@@ -462,10 +513,13 @@ export class RequisitionsService {
     });
   }
 
-  private async emitDashboardSummary() {
-    const summary = await dashboardService.summary();
+  private async emitDashboardSummary(departmentId?: number) {
+    const summary = await dashboardService.summaryForAll();
     await safeEmit((io) => {
       io.to("dashboard:admins").emit("dashboard:summaryUpdated", summary);
+      if (departmentId) {
+        io.to(`department:${departmentId}`).emit("dashboard:summaryUpdated", { departmentId });
+      }
     });
   }
 }

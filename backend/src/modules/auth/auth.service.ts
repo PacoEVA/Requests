@@ -12,6 +12,7 @@ function toTokenUser(user: InternalUserRecord): AuthenticatedUser {
     username: user.username,
     fullName: user.fullName,
     role: user.role,
+    departmentId: user.departmentId,
     requirePasswordChange: user.requirePasswordChange
   };
 }
@@ -44,6 +45,7 @@ export class AuthService {
         username: payload.username,
         fullName: payload.fullName,
         role: payload.role,
+        departmentId: payload.departmentId,
         requirePasswordChange: payload.requirePasswordChange
       }
     };

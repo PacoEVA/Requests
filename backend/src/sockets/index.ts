@@ -42,6 +42,7 @@ export function configureSockets(httpServer: HttpServer) {
         const socketUser: AuthenticatedUser = {
           ...user,
           role: currentUser.role,
+          departmentId: currentUser.departmentId,
           fullName: currentUser.fullName,
           username: currentUser.username,
           requirePasswordChange: currentUser.requirePasswordChange
@@ -53,6 +54,8 @@ export function configureSockets(httpServer: HttpServer) {
 
         if (socketUser.role === "Admin" || socketUser.role === "Compras") {
           socket.join("dashboard:admins");
+        } else if (socketUser.role === "Supervisor" && socketUser.departmentId) {
+          socket.join(`department:${socketUser.departmentId}`);
         }
       } catch {
         socket.emit("socket:error", { code: "INVALID_TOKEN", message: "Token inválido" });
@@ -77,6 +80,7 @@ export function configureSockets(httpServer: HttpServer) {
           const socketUser: AuthenticatedUser = {
             ...user,
             role: currentUser.role,
+            departmentId: currentUser.departmentId,
             fullName: currentUser.fullName,
             username: currentUser.username,
             requirePasswordChange: currentUser.requirePasswordChange
@@ -88,6 +92,8 @@ export function configureSockets(httpServer: HttpServer) {
 
           if (socketUser.role === "Admin" || socketUser.role === "Compras") {
             socket.join("dashboard:admins");
+          } else if (socketUser.role === "Supervisor" && socketUser.departmentId) {
+            socket.join(`department:${socketUser.departmentId}`);
           }
         }
 
@@ -95,7 +101,12 @@ export function configureSockets(httpServer: HttpServer) {
           const requisition = await requisitionsRepository.findForEmployee(requisitionId, socket.data.employee.id);
           if (!requisition) throw new Error("sin permiso");
         } else if (socket.data.user) {
-          const requisition = await requisitionsRepository.findForAdmin(requisitionId);
+          const departmentId =
+            socket.data.user.role === "Supervisor"
+              ? Number(socket.data.user.departmentId ?? 0)
+              : undefined;
+          if (socket.data.user.role === "Supervisor" && !departmentId) throw new Error("supervisor sin departamento");
+          const requisition = await requisitionsRepository.findForAdmin(requisitionId, departmentId);
           if (!requisition) throw new Error("sin permiso");
         } else {
           throw new Error("socket no autenticado");

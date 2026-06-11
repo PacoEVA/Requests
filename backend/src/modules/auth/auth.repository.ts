@@ -8,6 +8,7 @@ function mapUserRecord(row: Record<string, unknown>): InternalUserRecord {
     fullName: String(row.FullName),
     passwordHash: String(row.PasswordHash),
     role: row.RoleName as InternalUserRecord["role"],
+    departmentId: row.DepartmentId === null || row.DepartmentId === undefined ? null : Number(row.DepartmentId),
     isActive: Boolean(row.IsActive),
     requirePasswordChange: Boolean(row.RequirePasswordChange)
   };
@@ -25,6 +26,7 @@ export class AuthRepository {
           U.Username,
           U.FullName,
           U.PasswordHash,
+          U.DepartmentId,
           U.IsActive,
           U.RequirePasswordChange,
           R.Name AS RoleName
@@ -47,6 +49,7 @@ export class AuthRepository {
           U.Username,
           U.FullName,
           U.PasswordHash,
+          U.DepartmentId,
           U.IsActive,
           U.RequirePasswordChange,
           R.Name AS RoleName

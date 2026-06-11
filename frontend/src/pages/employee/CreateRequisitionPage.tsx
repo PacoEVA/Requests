@@ -103,7 +103,7 @@ export function CreateRequisitionPage() {
             <thead>
               <tr>
                 <th className="line-number">#</th>
-                <th>Material de catálogo</th>
+                <th>Material</th>
                 <th>Material manual</th>
                 <th>Cantidad</th>
                 <th>Observación</th>
@@ -145,8 +145,8 @@ export function CreateRequisitionPage() {
                   <td>
                     <input
                       className="form-control form-control-sm text-end"
-                      min="0.01"
-                      step="0.01"
+                      min="1"
+                      step="1"
                       type="number"
                       value={item.quantityRequested}
                       onChange={(event) => updateItem(index, { quantityRequested: Number(event.target.value) })}

@@ -6,7 +6,7 @@ import { authService } from "../../services/auth.service";
 
 export function ForceChangePasswordPage() {
   const navigate = useNavigate();
-  const { token, refreshMe } = useAuth();
+  const { token, logout } = useAuth();
   const [newPassword, setNewPassword] = useState("");
   const [message, setMessage] = useState("");
 
@@ -17,8 +17,11 @@ export function ForceChangePasswordPage() {
 
     try {
       await authService.forceChangePassword(token, newPassword);
-      await refreshMe();
-      navigate("/admin/dashboard");
+      logout();
+      navigate("/admin/login", {
+        replace: true,
+        state: { message: "Contrasena actualizada. Inicie sesion con su nueva contrasena." }
+      });
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "No se pudo cambiar la contraseña");
     }

@@ -71,8 +71,9 @@ function RankingList({
 }
 
 export function DashboardPage() {
-  const { token } = useAuth();
+  const { token, user } = useAuth();
   const socket = useSocket();
+  const supervisorDepartmentId = user?.role === "Supervisor" ? String(user.departmentId ?? "") : "";
   const [summary, setSummary] = useState<DashboardSummary>(emptySummary);
   const [recent, setRecent] = useState<RequisitionSummary[]>([]);
   const [stats, setStats] = useState<DashboardStatistics | null>(null);
@@ -104,6 +105,12 @@ export function DashboardPage() {
     if (!token) return;
     adminService.departments(token).then((response) => setDepartments(response.departments)).catch(() => setDepartments([]));
   }, [token]);
+
+  useEffect(() => {
+    if (supervisorDepartmentId) {
+      setFilters((current) => ({ ...current, departmentId: supervisorDepartmentId }));
+    }
+  }, [supervisorDepartmentId]);
 
   useEffect(() => {
     loadDashboard();
@@ -158,7 +165,11 @@ export function DashboardPage() {
           </label>
           <label>
             Departamento
-            <select value={filters.departmentId} onChange={(event) => setFilters({ ...filters, departmentId: event.target.value })}>
+            <select
+              value={filters.departmentId}
+              disabled={Boolean(supervisorDepartmentId)}
+              onChange={(event) => setFilters({ ...filters, departmentId: event.target.value })}
+            >
               <option value="">Todos</option>
               {departments.map((department) => (
                 <option key={recordId(department)} value={recordId(department)}>
@@ -216,10 +227,6 @@ export function DashboardPage() {
             <div>
               <dt>Porcentaje entregado</dt>
               <dd>{Math.round((stats?.deliveryRate ?? 0) * 100)}%</dd>
-            </div>
-            <div>
-              <dt>Rechazadas / Canceladas / Urgentes</dt>
-              <dd>{stats?.rejectedCount ?? 0} / {stats?.cancelledCount ?? 0} / {stats?.urgentCount ?? 0}</dd>
             </div>
           </dl>
         </div>

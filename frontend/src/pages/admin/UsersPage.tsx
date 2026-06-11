@@ -11,6 +11,7 @@ export function UsersPage() {
   const [users, setUsers] = useState<unknown[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
   const [temporaryPassword, setTemporaryPassword] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
   const [editingId, setEditingId] = useState<number | null>(null);
   const [form, setForm] = useState({
     username: "",
@@ -33,18 +34,35 @@ export function UsersPage() {
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
     if (!token) return;
+    const isSupervisor = form.role === "Supervisor";
+    setErrorMessage("");
+
+    if (!editingId && form.password.length < 8) {
+      setErrorMessage("La contrasena temporal debe tener al menos 8 caracteres.");
+      return;
+    }
+
+    if (isSupervisor && !form.departmentId) {
+      setErrorMessage("Debe seleccionar un departamento para el supervisor.");
+      return;
+    }
 
     const payload = {
       username: form.username,
       fullName: form.fullName,
       role: form.role,
-      departmentId: form.departmentId ? Number(form.departmentId) : undefined
+      departmentId: isSupervisor && form.departmentId ? Number(form.departmentId) : undefined
     };
 
-    if (editingId) {
-      await adminService.updateUser(token, editingId, payload);
-    } else {
-      await adminService.createUser(token, { ...payload, password: form.password });
+    try {
+      if (editingId) {
+        await adminService.updateUser(token, editingId, payload);
+      } else {
+        await adminService.createUser(token, { ...payload, password: form.password });
+      }
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : "No se pudo guardar el usuario.");
+      return;
     }
 
     setForm({ username: "", fullName: "", password: "", role: "Compras", departmentId: "" });
@@ -85,6 +103,7 @@ export function UsersPage() {
               Contrasena temporal
               <input
                 required
+                minLength={8}
                 type="password"
                 value={form.password}
                 onChange={(event) => setForm({ ...form, password: event.target.value })}
@@ -93,26 +112,38 @@ export function UsersPage() {
           ) : null}
           <label>
             Rol
-            <select value={form.role} onChange={(event) => setForm({ ...form, role: event.target.value })}>
+            <select
+              value={form.role}
+              onChange={(event) =>
+                setForm({
+                  ...form,
+                  role: event.target.value,
+                  departmentId: event.target.value === "Supervisor" ? form.departmentId : ""
+                })
+              }
+            >
               <option>Admin</option>
               <option>Compras</option>
               <option>Supervisor</option>
             </select>
           </label>
-          <label>
-            Departamento
-            <select value={form.departmentId} onChange={(event) => setForm({ ...form, departmentId: event.target.value })}>
-              <option value="">Sin departamento</option>
-              {departments.map((department) => (
-                <option key={recordId(department)} value={recordId(department)}>
-                  {recordName(department)}
-                </option>
-              ))}
-            </select>
-          </label>
+          {form.role === "Supervisor" ? (
+            <label>
+              Departamento
+              <select required value={form.departmentId} onChange={(event) => setForm({ ...form, departmentId: event.target.value })}>
+                <option value="">Seleccione un departamento</option>
+                {departments.map((department) => (
+                  <option key={recordId(department)} value={recordId(department)}>
+                    {recordName(department)}
+                  </option>
+                ))}
+              </select>
+            </label>
+          ) : null}
           <button className="primary-button span-2" type="submit">
             <Plus size={18} /> {editingId ? "Guardar usuario" : "Crear usuario"}
           </button>
+          {errorMessage ? <p className="form-error span-2">{errorMessage}</p> : null}
           {temporaryPassword ? <p className="form-success span-2">Temporal: {temporaryPassword}</p> : null}
         </form>
 

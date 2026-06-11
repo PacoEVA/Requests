@@ -2,6 +2,7 @@ import { ClipboardList, FilePlus2, UserRound } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { PageHeader } from "../../components/common/PageHeader";
+import { StatusBadge } from "../../components/common/StatusBadge";
 import { useEmployee } from "../../contexts/EmployeeContext";
 import { requisitionService } from "../../services/requisition.service";
 import type { RequisitionSummary } from "../../types/requisition.types";
@@ -59,7 +60,9 @@ export function EmployeeHomePage() {
                     <td>
                       <Link to={`/employee/requisitions/${id}`}>{recordValue<string>(record, "code", "Code", "")}</Link>
                     </td>
-                    <td>{recordValue<string>(record, "statusName", "StatusName", "")}</td>
+                    <td>
+                      <StatusBadge status={recordValue<string>(record, "statusName", "StatusName", "")} />
+                    </td>
                     <td>{recordValue<string>(record, "priority", "Priority", "Media")}</td>
                   </tr>
                 );

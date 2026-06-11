@@ -50,6 +50,7 @@ export interface RequisitionMeta {
   id: number;
   code: string;
   employeeId: number;
+  departmentId: number;
   statusCode: string;
   statusName: string;
   statusId: number;

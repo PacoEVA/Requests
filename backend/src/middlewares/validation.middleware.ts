@@ -9,7 +9,9 @@ export function validate(schema: ZodSchema, target: ValidationTarget = "body"): 
     const result = schema.safeParse(req[target]);
 
     if (!result.success) {
-      next(new AppError("Datos inválidos", 400, "VALIDATION_ERROR"));
+      const firstIssue = result.error.issues[0];
+      const message = firstIssue?.message ? `Datos invalidos: ${firstIssue.message}` : "Datos invalidos";
+      next(new AppError(message, 400, "VALIDATION_ERROR"));
       return;
     }
 

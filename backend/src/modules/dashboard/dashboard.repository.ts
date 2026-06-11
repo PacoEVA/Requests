@@ -33,9 +33,9 @@ function nullableText(value: unknown) {
 }
 
 export class DashboardRepository {
-  async summary() {
+  async summary(departmentId?: number) {
     const pool = await getDbPool();
-    const result = await pool.query(`
+    const result = await pool.request().input("DepartmentId", sql.Int, departmentId ?? null).query(`
       SELECT
         SUM(CASE WHEN S.Code = 'PENDING' THEN 1 ELSE 0 END) AS Pending,
         SUM(CASE WHEN S.Code = 'IN_REVIEW' THEN 1 ELSE 0 END) AS InReview,
@@ -46,6 +46,8 @@ export class DashboardRepository {
         SUM(CASE WHEN R.Priority = 'Urgente' THEN 1 ELSE 0 END) AS Urgent
       FROM Requisitions R
       INNER JOIN RequisitionStatuses S ON R.StatusId = S.Id
+      INNER JOIN Employees E ON R.EmployeeId = E.Id
+      WHERE (@DepartmentId IS NULL OR E.DepartmentId = @DepartmentId)
     `);
 
     const row = result.recordset[0] ?? {};
@@ -63,9 +65,9 @@ export class DashboardRepository {
     };
   }
 
-  async recentRequisitions() {
+  async recentRequisitions(departmentId?: number) {
     const pool = await getDbPool();
-    const result = await pool.query(`
+    const result = await pool.request().input("DepartmentId", sql.Int, departmentId ?? null).query(`
       SELECT TOP 10
         R.Id,
         R.Code,
@@ -78,6 +80,7 @@ export class DashboardRepository {
       INNER JOIN RequisitionStatuses S ON R.StatusId = S.Id
       INNER JOIN Employees E ON R.EmployeeId = E.Id
       INNER JOIN Departments D ON E.DepartmentId = D.Id
+      WHERE (@DepartmentId IS NULL OR E.DepartmentId = @DepartmentId)
       ORDER BY R.CreatedAt DESC
     `);
 

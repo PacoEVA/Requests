@@ -1,9 +1,11 @@
-import { ClipboardList, FilePlus2, Home, UserRound } from "lucide-react";
+import { Bell, ClipboardList, FilePlus2, Home, UserRound } from "lucide-react";
 import { NavLink, Outlet } from "react-router-dom";
 import { useEmployee } from "../../contexts/EmployeeContext";
+import { useRealtimeNotifications } from "../../contexts/RealtimeNotificationsContext";
 
 export function EmployeeShell() {
   const { employee } = useEmployee();
+  const { permission, requestBrowserPermission } = useRealtimeNotifications();
 
   return (
     <div className="app-shell employee-shell">
@@ -32,6 +34,11 @@ export function EmployeeShell() {
             <UserRound size={18} /> Perfil
           </NavLink>
         </nav>
+        {permission === "default" ? (
+          <button className="icon-text-button subtle" type="button" onClick={requestBrowserPermission}>
+            <Bell size={18} /> Activar notificaciones
+          </button>
+        ) : null}
       </aside>
       <main className="workspace">
         <Outlet />

@@ -7,6 +7,7 @@ import { useEmployee } from "../../contexts/EmployeeContext";
 import { useSocket } from "../../contexts/SocketContext";
 import { requisitionService } from "../../services/requisition.service";
 import type { RequisitionDetail } from "../../types/requisition.types";
+import { humanizeHistoryNotes, humanizeHistoryTitle } from "../../utils/requisitionHistory";
 import { recordValue } from "../../utils/record";
 
 const finalStatusCodes = new Set(["REJECTED", "DELIVERED", "CANCELLED"]);
@@ -176,10 +177,10 @@ export function EmployeeRequisitionDetailPage() {
               {history.map((entry) => (
                 <article key={String(entry.Id ?? entry.id)} className="timeline-item">
                   <div>
-                    <strong>{text(entry, "newStatusName", "NewStatusName", text(entry, "action", "Action", "Actualizacion"))}</strong>
+                    <strong>{humanizeHistoryTitle(entry)}</strong>
                     <span>{dateText(entry.CreatedAt ?? entry.createdAt)}</span>
                   </div>
-                  <p>{text(entry, "notes", "Notes", "Sin notas")}</p>
+                  <p>{humanizeHistoryNotes(entry)}</p>
                   <small>{text(entry, "employeeName", "EmployeeName", text(entry, "internalUserName", "InternalUserName", "Sistema"))}</small>
                 </article>
               ))}

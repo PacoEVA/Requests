@@ -5,6 +5,7 @@ describe("requisition status rules", () => {
   it("allows configured operational transitions", () => {
     expect(canTransition("PENDING", "IN_REVIEW")).toBe(true);
     expect(canTransition("APPROVED", "READY_TO_DELIVER")).toBe(true);
+    expect(canTransition("APPROVED", "PARTIALLY_DELIVERED")).toBe(true);
     expect(canTransition("PARTIALLY_DELIVERED", "IN_PURCHASE")).toBe(true);
   });
 

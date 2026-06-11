@@ -22,6 +22,22 @@ export interface DeliveryResult {
   statusName: string;
 }
 
+const STATUS_HISTORY_MESSAGES: Record<string, string> = {
+  PENDING: "Requisicion pendiente",
+  IN_REVIEW: "Requisicion en revision",
+  APPROVED: "Requisicion aprobada",
+  IN_PURCHASE: "Requisicion en compra",
+  READY_TO_DELIVER: "Requisicion lista para entregar",
+  PARTIALLY_DELIVERED: "Entrega parcial registrada",
+  DELIVERED: "Requisicion entregada",
+  REJECTED: "Requisicion rechazada",
+  CANCELLED: "Requisicion cancelada"
+};
+
+function statusHistoryMessage(statusCode: string, statusName: string) {
+  return STATUS_HISTORY_MESSAGES[statusCode] ?? `Estado actualizado a ${statusName}`;
+}
+
 function paging(filters: RequisitionFilters) {
   const page = Math.max(Number(filters.page ?? 1), 1);
   const pageSize = Math.min(Math.max(Number(filters.pageSize ?? 20), 1), 100);
@@ -74,6 +90,7 @@ function mapMeta(row: Record<string, unknown>): RequisitionMeta {
     id: Number(row.Id),
     code: String(row.Code),
     employeeId: Number(row.EmployeeId),
+    departmentId: Number(row.DepartmentId),
     statusCode: String(row.StatusCode),
     statusName: String(row.StatusName),
     statusId: Number(row.StatusId),
@@ -229,6 +246,7 @@ export class RequisitionsRepository {
           S.Code AS StatusCode,
           S.Name AS StatusName,
           E.Name AS EmployeeName,
+          D.Id AS DepartmentId,
           D.Name AS DepartmentName,
           U.FullName AS AssignedToName
         FROM Requisitions R
@@ -264,8 +282,8 @@ export class RequisitionsRepository {
     return this.findDetail(requisitionId, employeeId);
   }
 
-  async findForAdmin(requisitionId: number) {
-    return this.findDetail(requisitionId);
+  async findForAdmin(requisitionId: number, departmentId?: number) {
+    return this.findDetail(requisitionId, undefined, departmentId);
   }
 
   async getMeta(requisitionId: number) {
@@ -278,12 +296,14 @@ export class RequisitionsRepository {
           R.Id,
           R.Code,
           R.EmployeeId,
+          E.DepartmentId,
           R.StatusId,
           S.Code AS StatusCode,
           S.Name AS StatusName,
           S.IsFinal
         FROM Requisitions R
         INNER JOIN RequisitionStatuses S ON R.StatusId = S.Id
+        INNER JOIN Employees E ON R.EmployeeId = E.Id
         WHERE R.Id = @Id
       `);
 
@@ -305,12 +325,13 @@ export class RequisitionsRepository {
     return result.recordset.map((row) => mapItem(row));
   }
 
-  private async findDetail(requisitionId: number, employeeId?: number) {
+  private async findDetail(requisitionId: number, employeeId?: number, departmentId?: number) {
     const pool = await getDbPool();
     const result = await pool
       .request()
       .input("Id", sql.Int, requisitionId)
       .input("EmployeeId", sql.Int, employeeId ?? null)
+      .input("DepartmentId", sql.Int, departmentId ?? null)
       .query(`
         SELECT
           R.*,
@@ -318,6 +339,7 @@ export class RequisitionsRepository {
           S.Name AS StatusName,
           S.IsFinal AS StatusIsFinal,
           E.Name AS EmployeeName,
+          D.Id AS DepartmentId,
           D.Name AS DepartmentName,
           U.FullName AS AssignedToName
         FROM Requisitions R
@@ -325,7 +347,9 @@ export class RequisitionsRepository {
         INNER JOIN Employees E ON R.EmployeeId = E.Id
         INNER JOIN Departments D ON E.DepartmentId = D.Id
         LEFT JOIN InternalUsers U ON R.AssignedToUserId = U.Id
-        WHERE R.Id = @Id AND (@EmployeeId IS NULL OR R.EmployeeId = @EmployeeId);
+        WHERE R.Id = @Id
+          AND (@EmployeeId IS NULL OR R.EmployeeId = @EmployeeId)
+          AND (@DepartmentId IS NULL OR D.Id = @DepartmentId);
 
         SELECT RI.*, M.Name AS MaterialName, M.ItemCode AS MaterialItemCode
         FROM RequisitionItems RI
@@ -486,8 +510,9 @@ export class RequisitionsRepository {
     try {
       const statusResult = await new sql.Request(transaction)
         .input("StatusCode", sql.NVarChar(50), input.statusCode)
-        .query("SELECT TOP 1 Id FROM RequisitionStatuses WHERE Code = @StatusCode");
+        .query("SELECT TOP 1 Id, Name FROM RequisitionStatuses WHERE Code = @StatusCode");
       const statusId = Number(statusResult.recordset[0]?.Id);
+      const statusName = String(statusResult.recordset[0]?.Name ?? input.statusCode);
       if (!statusId) {
         await transaction.rollback();
         return null;
@@ -532,7 +557,7 @@ export class RequisitionsRepository {
         .input("InternalUserId", sql.Int, userId)
         .input("PreviousStatusId", sql.Int, previousStatusId)
         .input("StatusId", sql.Int, statusId)
-        .input("Notes", sql.NVarChar(1000), input.reason ?? `Estado cambiado a ${input.statusCode}`)
+        .input("Notes", sql.NVarChar(1000), input.reason?.trim() || statusHistoryMessage(input.statusCode, statusName))
         .query(`
           INSERT INTO RequisitionHistory
             (RequisitionId, Action, PreviousStatusId, NewStatusId, PerformedByType, InternalUserId, Notes)
@@ -613,7 +638,7 @@ export class RequisitionsRepository {
         await new sql.Request(transaction)
           .input("RequisitionId", sql.Int, requisitionId)
           .input("ItemId", sql.Int, item.requisitionItemId)
-          .input("QuantityDelivered", sql.Decimal(18, 4), item.quantityDelivered)
+          .input("QuantityDelivered", sql.Decimal(18, 4), current.quantityDelivered + item.quantityDelivered)
           .query(`
             UPDATE RequisitionItems
             SET QuantityDelivered = @QuantityDelivered
