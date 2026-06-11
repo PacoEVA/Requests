@@ -10,8 +10,7 @@ import type { RequisitionItemDraft, RequisitionPriority } from "../../types/requ
 import { recordId, recordName } from "../../utils/record";
 
 const emptyItem: RequisitionItemDraft = {
-  quantityRequested: 1,
-  unitOfMeasure: "Unidad"
+  quantityRequested: 1
 };
 
 export function CreateRequisitionPage() {
@@ -107,7 +106,6 @@ export function CreateRequisitionPage() {
                 <th>Material de catálogo</th>
                 <th>Material manual</th>
                 <th>Cantidad</th>
-                <th>Unidad</th>
                 <th>Observación</th>
                 <th className="line-actions">Acción</th>
               </tr>
@@ -152,13 +150,6 @@ export function CreateRequisitionPage() {
                       type="number"
                       value={item.quantityRequested}
                       onChange={(event) => updateItem(index, { quantityRequested: Number(event.target.value) })}
-                    />
-                  </td>
-                  <td>
-                    <input
-                      className="form-control form-control-sm"
-                      value={item.unitOfMeasure ?? ""}
-                      onChange={(event) => updateItem(index, { unitOfMeasure: event.target.value })}
                     />
                   </td>
                   <td>

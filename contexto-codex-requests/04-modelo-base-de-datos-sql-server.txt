@@ -5,7 +5,8 @@ NOTAS GENERALES
 - Usar CreatedAt, UpdatedAt y IsActive donde aplique.
 - No crear tabla Attachments.
 - No crear tablas de sucursales.
-- Temporalmente el inventario y los materiales son solamente locales.
+- No manejar inventario, stocks ni movimientos de inventario.
+- Los materiales no llevan categoria ni unidad de medida.
 
 1. Departments
 Campos:
@@ -58,22 +59,12 @@ Campos:
 - CreatedAt DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
 - UpdatedAt DATETIME2 NULL
 
-5. MaterialCategories
+5. Materials
 Campos:
 - Id INT IDENTITY PRIMARY KEY
-- Name NVARCHAR(150) NOT NULL
-- Description NVARCHAR(300) NULL
-- IsActive BIT NOT NULL DEFAULT 1
-- CreatedAt DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
-- UpdatedAt DATETIME2 NULL
-
-6. Materials
-Campos:
-- Id INT IDENTITY PRIMARY KEY
+- ItemCode NVARCHAR(80) NULL UNIQUE FILTRADO
 - Name NVARCHAR(200) NOT NULL
 - Description NVARCHAR(500) NULL
-- CategoryId INT NULL FOREIGN KEY REFERENCES MaterialCategories(Id)
-- UnitOfMeasure NVARCHAR(50) NULL
 - IsActive BIT NOT NULL DEFAULT 1
 - IsRequestable BIT NOT NULL DEFAULT 1
 - CreatedAt DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
@@ -81,33 +72,9 @@ Campos:
 
 Reglas:
 - Los materiales se administran localmente en Requests.
+- ItemCode permite relacionar el material con un codigo interno o externo.
 
-7. Inventory
-Campos:
-- Id INT IDENTITY PRIMARY KEY
-- MaterialId INT NOT NULL FOREIGN KEY REFERENCES Materials(Id)
-- CurrentStock DECIMAL(18,4) NOT NULL DEFAULT 0
-- MinimumStock DECIMAL(18,4) NOT NULL DEFAULT 0
-- CommittedStock DECIMAL(18,4) NOT NULL DEFAULT 0
-- OrderedStock DECIMAL(18,4) NOT NULL DEFAULT 0
-- AvailableStock AS (CurrentStock - CommittedStock) PERSISTED
-- UpdatedAt DATETIME2 NULL
-
-8. InventoryMovements
-Campos:
-- Id INT IDENTITY PRIMARY KEY
-- MaterialId INT NOT NULL FOREIGN KEY REFERENCES Materials(Id)
-- MovementType NVARCHAR(30) NOT NULL -- IN, OUT, ADJUSTMENT, DELIVERY
-- Quantity DECIMAL(18,4) NOT NULL
-- PreviousStock DECIMAL(18,4) NULL
-- NewStock DECIMAL(18,4) NULL
-- ReferenceType NVARCHAR(50) NULL -- REQUISITION, MANUAL
-- ReferenceId INT NULL
-- CreatedByUserId INT NULL FOREIGN KEY REFERENCES InternalUsers(Id)
-- CreatedAt DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
-- Notes NVARCHAR(500) NULL
-
-9. RequisitionStatuses
+6. RequisitionStatuses
 Campos:
 - Id INT IDENTITY PRIMARY KEY
 - Code NVARCHAR(50) NOT NULL UNIQUE
@@ -128,7 +95,7 @@ Seed recomendado:
 
 Aunque se eliminó configuración dinámica de estados, esta tabla puede existir como catálogo fijo/seedeado.
 
-10. Requisitions
+7. Requisitions
 Campos:
 - Id INT IDENTITY PRIMARY KEY
 - Code NVARCHAR(30) NOT NULL UNIQUE
@@ -145,7 +112,7 @@ Campos:
 - RejectedAt DATETIME2 NULL
 - RejectReason NVARCHAR(1000) NULL
 
-11. RequisitionItems
+8. RequisitionItems
 Campos:
 - Id INT IDENTITY PRIMARY KEY
 - RequisitionId INT NOT NULL FOREIGN KEY REFERENCES Requisitions(Id)
@@ -154,7 +121,6 @@ Campos:
 - QuantityRequested DECIMAL(18,4) NOT NULL
 - QuantityApproved DECIMAL(18,4) NULL
 - QuantityDelivered DECIMAL(18,4) NULL DEFAULT 0
-- UnitOfMeasure NVARCHAR(50) NULL
 - Comment NVARCHAR(500) NULL
 - CreatedAt DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
 
@@ -163,7 +129,7 @@ Reglas:
 - Si MaterialId es NULL, ManualMaterialName debe tener valor.
 - QuantityRequested debe ser > 0.
 
-12. RequisitionComments
+9. RequisitionComments
 Campos:
 - Id INT IDENTITY PRIMARY KEY
 - RequisitionId INT NOT NULL FOREIGN KEY REFERENCES Requisitions(Id)
@@ -175,7 +141,7 @@ Campos:
 
 No incluir archivos adjuntos.
 
-13. RequisitionHistory
+10. RequisitionHistory
 Campos:
 - Id INT IDENTITY PRIMARY KEY
 - RequisitionId INT NOT NULL FOREIGN KEY REFERENCES Requisitions(Id)
@@ -188,7 +154,7 @@ Campos:
 - Notes NVARCHAR(1000) NULL
 - CreatedAt DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
 
-14. Notifications
+11. Notifications
 Campos:
 - Id INT IDENTITY PRIMARY KEY
 - RecipientType NVARCHAR(20) NOT NULL -- EMPLOYEE, INTERNAL_USER, ROLE
@@ -209,3 +175,6 @@ TABLAS ELIMINADAS / NO CREAR
 - RequisitionAttachments.
 - CommentAttachments.
 - SapSyncLog.
+- MaterialCategories.
+- Inventory.
+- InventoryMovements.

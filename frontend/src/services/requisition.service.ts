@@ -48,11 +48,17 @@ export const requisitionService = {
   adminDetail(token: string, id: string) {
     return apiRequest<{ requisition: RequisitionDetail }>(`/admin/requisitions/${id}`, { token });
   },
-  updateStatus(token: string, id: string, statusCode: string, reason?: string) {
+  updateStatus(
+    token: string,
+    id: string,
+    statusCode: string,
+    reason?: string,
+    items?: Array<{ requisitionItemId: number; quantityApproved: number }>
+  ) {
     return apiRequest<{ ok: boolean; requisition: RequisitionDetail }>(`/admin/requisitions/${id}/status`, {
       method: "PATCH",
       token,
-      body: JSON.stringify({ statusCode, reason })
+      body: JSON.stringify({ statusCode, reason, items })
     });
   },
   assign(token: string, id: string, assignedToUserId: number) {

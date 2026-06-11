@@ -12,6 +12,19 @@ export const adminService = {
       body: JSON.stringify(payload)
     });
   },
+  updateDepartment(token: string, id: number, payload: { name: string; description?: string }) {
+    return apiRequest<{ department: Department }>(`/admin/departments/${id}`, {
+      method: "PUT",
+      token,
+      body: JSON.stringify(payload)
+    });
+  },
+  setDepartmentActive(token: string, id: number, isActive: boolean) {
+    return apiRequest<{ ok: boolean }>(`/admin/departments/${id}/${isActive ? "activate" : "deactivate"}`, {
+      method: "PATCH",
+      token
+    });
+  },
   users(token: string) {
     return apiRequest<{ users: unknown[] }>("/admin/users", { token });
   },
@@ -32,10 +45,21 @@ export const adminService = {
       body: JSON.stringify({ autoGenerate: true })
     });
   },
-  inventory(token: string) {
-    return apiRequest<{ inventory: unknown[] }>("/admin/inventory", { token });
+  updateUser(
+    token: string,
+    id: number,
+    payload: { username: string; fullName: string; role: string; departmentId?: number }
+  ) {
+    return apiRequest<{ user: unknown }>(`/admin/users/${id}`, {
+      method: "PUT",
+      token,
+      body: JSON.stringify(payload)
+    });
   },
-  lowStock(token: string) {
-    return apiRequest<{ inventory: unknown[] }>("/admin/inventory/low-stock", { token });
+  setUserActive(token: string, userId: number, isActive: boolean) {
+    return apiRequest<{ ok: boolean }>(`/admin/users/${userId}/${isActive ? "activate" : "deactivate"}`, {
+      method: "PATCH",
+      token
+    });
   }
 };

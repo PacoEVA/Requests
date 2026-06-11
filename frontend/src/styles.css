@@ -323,6 +323,22 @@ button:disabled {
   gap: 16px;
 }
 
+.filter-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  align-items: end;
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.compact-filter {
+  margin-bottom: 16px;
+}
+
+.dashboard-filter-panel {
+  margin-bottom: 28px;
+}
+
 .form-grid.wide {
   max-width: 1040px;
 }
@@ -426,6 +442,28 @@ textarea {
   background: var(--surface-soft);
 }
 
+.small-button {
+  min-height: 34px;
+  padding: 7px 10px;
+  font-size: 0.82rem;
+}
+
+.compact-actions {
+  gap: 8px;
+}
+
+.inline-form {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.inline-form input {
+  width: 120px;
+  min-height: 34px;
+  padding: 6px 8px;
+}
+
 .danger-button,
 .icon-button.danger {
   color: #ffffff;
@@ -523,23 +561,23 @@ textarea {
 
 .metrics-grid {
   display: grid;
-  grid-template-columns: repeat(6, minmax(150px, 1fr));
-  gap: 14px;
+  grid-template-columns: repeat(7, minmax(120px, 1fr));
+  gap: 12px;
   max-width: 1320px;
   margin: 0 auto 18px;
 }
 
 .metric-card {
   display: grid;
-  gap: 10px;
-  min-height: 128px;
-  padding: 18px;
+  gap: 8px;
+  min-height: 112px;
+  padding: 16px;
   border-left: 4px solid var(--line-strong);
 }
 
 .metric-card svg {
-  width: 22px;
-  height: 22px;
+  width: 20px;
+  height: 20px;
 }
 
 .metric-card span {
@@ -550,7 +588,7 @@ textarea {
 
 .metric-card strong {
   color: #17202a;
-  font-size: 2rem;
+  font-size: 1.8rem;
   line-height: 1;
 }
 
@@ -695,6 +733,28 @@ textarea {
 .panel-form {
   display: grid;
   gap: 12px;
+}
+
+.mini-lines {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: #ffffff;
+}
+
+.mini-lines > strong {
+  font-size: 0.88rem;
+}
+
+.mini-lines label {
+  gap: 5px;
+  font-size: 0.82rem;
+}
+
+.mini-lines input {
+  min-height: 36px;
 }
 
 .form-hint {
@@ -978,6 +1038,69 @@ td a {
   margin: 0;
 }
 
+.stats-grid {
+  display: grid;
+  grid-template-columns: minmax(360px, 1.15fr) repeat(2, minmax(260px, 0.85fr));
+  gap: 18px;
+  max-width: 1320px;
+  margin: 0 auto 18px;
+  align-items: stretch;
+}
+
+.stats-grid > .surface {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+}
+
+.stats-overview-card,
+.ranking-card {
+  min-height: 260px;
+}
+
+.ranking-card {
+  display: flex;
+  flex-direction: column;
+}
+
+.ranking-list {
+  display: grid;
+  align-content: start;
+  gap: 14px;
+  flex: 1;
+}
+
+.ranking-row {
+  display: grid;
+  gap: 8px;
+}
+
+.ranking-row div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  color: #263541;
+}
+
+.ranking-row strong {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ranking-row span {
+  color: var(--muted);
+  font-weight: 900;
+}
+
+.ranking-row i {
+  display: block;
+  height: 7px;
+  border-radius: 999px;
+  background: var(--primary);
+}
+
 .stats-list div {
   display: flex;
   justify-content: space-between;
@@ -1026,10 +1149,14 @@ td a {
     margin-top: 12px;
   }
 
-  .metrics-grid,
   .action-grid,
-  .report-grid {
+  .report-grid,
+  .stats-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .metrics-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }
 
@@ -1065,7 +1192,8 @@ td a {
 
   .metrics-grid,
   .action-grid,
-  .report-grid {
+  .report-grid,
+  .stats-grid {
     grid-template-columns: 1fr;
   }
 

@@ -11,7 +11,6 @@ import { MyRequisitionsPage } from "../pages/employee/MyRequisitionsPage";
 import { DashboardPage } from "../pages/admin/DashboardPage";
 import { DepartmentsPage } from "../pages/admin/DepartmentsPage";
 import { ForceChangePasswordPage } from "../pages/admin/ForceChangePasswordPage";
-import { InventoryPage } from "../pages/admin/InventoryPage";
 import { LoginPage } from "../pages/admin/LoginPage";
 import { MaterialsPage } from "../pages/admin/MaterialsPage";
 import { ReportsPage } from "../pages/admin/ReportsPage";
@@ -43,7 +42,6 @@ export function AppRoutes() {
           <Route path="/admin/materials" element={<MaterialsPage />} />
           <Route path="/admin/departments" element={<DepartmentsPage />} />
           <Route path="/admin/users" element={<UsersPage />} />
-          <Route path="/admin/inventory" element={<InventoryPage />} />
           <Route path="/admin/reports" element={<ReportsPage />} />
         </Route>
       </Route>

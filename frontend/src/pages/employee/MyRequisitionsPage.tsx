@@ -1,5 +1,5 @@
 import { Search } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { PageHeader } from "../../components/common/PageHeader";
 import { StatusBadge } from "../../components/common/StatusBadge";
@@ -9,16 +9,45 @@ import { requisitionService } from "../../services/requisition.service";
 import type { RequisitionSummary } from "../../types/requisition.types";
 import { recordValue } from "../../utils/record";
 
+const statusOptions = [
+  { code: "", label: "Todos" },
+  { code: "PENDING", label: "Pendiente" },
+  { code: "IN_REVIEW", label: "En revision" },
+  { code: "APPROVED", label: "Aprobada" },
+  { code: "IN_PURCHASE", label: "En compra" },
+  { code: "READY_TO_DELIVER", label: "Lista para entregar" },
+  { code: "PARTIALLY_DELIVERED", label: "Entrega parcial" },
+  { code: "DELIVERED", label: "Entregada" },
+  { code: "REJECTED", label: "Rechazada" },
+  { code: "CANCELLED", label: "Cancelada" }
+];
+
 export function MyRequisitionsPage() {
   const { employeeToken } = useEmployee();
   const socket = useSocket();
   const [requisitions, setRequisitions] = useState<RequisitionSummary[]>([]);
-  const [search, setSearch] = useState("");
+  const [filters, setFilters] = useState({
+    search: "",
+    status: "",
+    dateFrom: "",
+    dateTo: ""
+  });
+
+  const queryFilters = useMemo(
+    () => ({
+      search: filters.search,
+      status: filters.status,
+      dateFrom: filters.dateFrom,
+      dateTo: filters.dateTo,
+      pageSize: 100
+    }),
+    [filters]
+  );
 
   const loadRequisitions = useCallback(() => {
     if (!employeeToken) return;
-    requisitionService.my(employeeToken).then((response) => setRequisitions(response.requisitions)).catch(() => setRequisitions([]));
-  }, [employeeToken]);
+    requisitionService.my(employeeToken, queryFilters).then((response) => setRequisitions(response.requisitions)).catch(() => setRequisitions([]));
+  }, [employeeToken, queryFilters]);
 
   useEffect(() => {
     loadRequisitions();
@@ -41,48 +70,68 @@ export function MyRequisitionsPage() {
     };
   }, [employeeToken, loadRequisitions, socket]);
 
-  const filtered = useMemo(
-    () =>
-      requisitions.filter((requisition) =>
-        recordValue<string>(requisition as Record<string, unknown>, "code", "Code", "")
-          .toLowerCase()
-          .includes(search.toLowerCase())
-      ),
-    [requisitions, search]
-  );
+  function onSubmit(event: FormEvent) {
+    event.preventDefault();
+    loadRequisitions();
+  }
 
   return (
     <>
       <PageHeader title="Mis requisiciones" eyebrow="Seguimiento" />
       <section className="surface">
-        <label className="search-field">
-          <Search size={18} />
-          <input placeholder="Buscar por código" value={search} onChange={(event) => setSearch(event.target.value)} />
-        </label>
+        <form className="filter-grid compact-filter" onSubmit={onSubmit}>
+          <label>
+            Codigo
+            <input value={filters.search} onChange={(event) => setFilters({ ...filters, search: event.target.value })} />
+          </label>
+          <label>
+            Estado
+            <select value={filters.status} onChange={(event) => setFilters({ ...filters, status: event.target.value })}>
+              {statusOptions.map((option) => (
+                <option key={option.code} value={option.code}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            Desde
+            <input type="date" value={filters.dateFrom} onChange={(event) => setFilters({ ...filters, dateFrom: event.target.value })} />
+          </label>
+          <label>
+            Hasta
+            <input type="date" value={filters.dateTo} onChange={(event) => setFilters({ ...filters, dateTo: event.target.value })} />
+          </label>
+          <button className="primary-button" type="submit">
+            <Search size={18} /> Buscar
+          </button>
+        </form>
+
         <div className="data-table">
           <table>
             <thead>
               <tr>
-                <th>Código</th>
+                <th>Codigo</th>
                 <th>Estado</th>
                 <th>Prioridad</th>
                 <th>Fecha</th>
               </tr>
             </thead>
             <tbody>
-              {filtered.map((requisition) => {
-                const id = recordValue<number>(requisition as Record<string, unknown>, "id", "Id", 0);
-                const code = recordValue<string>(requisition as Record<string, unknown>, "code", "Code", "");
+              {requisitions.map((requisition) => {
+                const record = requisition as Record<string, unknown>;
+                const id = recordValue<number>(record, "id", "Id", 0);
+                const code = recordValue<string>(record, "code", "Code", "");
                 return (
                   <tr key={id}>
                     <td>
                       <Link to={`/employee/requisitions/${id}`}>{code}</Link>
                     </td>
                     <td>
-                      <StatusBadge status={recordValue<string>(requisition as Record<string, unknown>, "statusName", "StatusName", "")} />
+                      <StatusBadge status={recordValue<string>(record, "statusName", "StatusName", "")} />
                     </td>
-                    <td>{recordValue<string>(requisition as Record<string, unknown>, "priority", "Priority", "Media")}</td>
-                    <td>{recordValue<string>(requisition as Record<string, unknown>, "createdAt", "CreatedAt", "")}</td>
+                    <td>{recordValue<string>(record, "priority", "Priority", "Media")}</td>
+                    <td>{recordValue<string>(record, "createdAt", "CreatedAt", "")}</td>
                   </tr>
                 );
               })}

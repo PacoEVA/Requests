@@ -18,7 +18,6 @@ export interface RequisitionItemRecord {
 
 export interface DeliveryResult {
   requisition: Record<string, unknown> | null;
-  lowStock: Array<Record<string, unknown>>;
   statusCode: string;
   statusName: string;
 }
@@ -137,13 +136,12 @@ export class RequisitionsRepository {
           .input("MaterialId", sql.Int, item.materialId ?? null)
           .input("ManualMaterialName", sql.NVarChar(200), item.manualMaterialName ?? null)
           .input("QuantityRequested", sql.Decimal(18, 4), item.quantityRequested)
-          .input("UnitOfMeasure", sql.NVarChar(50), item.unitOfMeasure ?? null)
           .input("Comment", sql.NVarChar(500), item.comment ?? null)
           .query(`
             INSERT INTO RequisitionItems
-              (RequisitionId, MaterialId, ManualMaterialName, QuantityRequested, UnitOfMeasure, Comment)
+              (RequisitionId, MaterialId, ManualMaterialName, QuantityRequested, Comment)
             VALUES
-              (@RequisitionId, @MaterialId, @ManualMaterialName, @QuantityRequested, @UnitOfMeasure, @Comment)
+              (@RequisitionId, @MaterialId, @ManualMaterialName, @QuantityRequested, @Comment)
           `);
       }
 
@@ -329,7 +327,7 @@ export class RequisitionsRepository {
         LEFT JOIN InternalUsers U ON R.AssignedToUserId = U.Id
         WHERE R.Id = @Id AND (@EmployeeId IS NULL OR R.EmployeeId = @EmployeeId);
 
-        SELECT RI.*, M.Name AS MaterialName, M.UnitOfMeasure AS MaterialUnitOfMeasure
+        SELECT RI.*, M.Name AS MaterialName, M.ItemCode AS MaterialItemCode
         FROM RequisitionItems RI
         LEFT JOIN Materials M ON RI.MaterialId = M.Id
         WHERE RI.RequisitionId = @Id
@@ -604,7 +602,6 @@ export class RequisitionsRepository {
         `);
 
       const currentItems = currentItemsResult.recordset.map((row) => mapItem(row));
-      const lowStock: Array<Record<string, unknown>> = [];
 
       for (const item of input.items) {
         const current = currentItems.find((row) => row.id === item.requisitionItemId);
@@ -613,7 +610,6 @@ export class RequisitionsRepository {
           return null;
         }
 
-        const delta = item.quantityDelivered - current.quantityDelivered;
         await new sql.Request(transaction)
           .input("RequisitionId", sql.Int, requisitionId)
           .input("ItemId", sql.Int, item.requisitionItemId)
@@ -623,66 +619,6 @@ export class RequisitionsRepository {
             SET QuantityDelivered = @QuantityDelivered
             WHERE Id = @ItemId AND RequisitionId = @RequisitionId
           `);
-
-        if (current.materialId && delta > 0) {
-          const inventoryResult = await new sql.Request(transaction)
-            .input("MaterialId", sql.Int, current.materialId)
-            .query(`
-              SELECT TOP 1 I.Id, I.CurrentStock, I.MinimumStock, M.Name AS MaterialName, M.UnitOfMeasure
-              FROM Inventory I WITH (UPDLOCK, HOLDLOCK)
-              INNER JOIN Materials M ON I.MaterialId = M.Id
-              WHERE I.MaterialId = @MaterialId
-            `);
-
-          const inventory = inventoryResult.recordset[0];
-          const previousStock = Number(inventory?.CurrentStock ?? 0);
-          const minimumStock = Number(inventory?.MinimumStock ?? 0);
-          const newStock = previousStock - delta;
-
-          if (inventory) {
-            await new sql.Request(transaction)
-              .input("MaterialId", sql.Int, current.materialId)
-              .input("NewStock", sql.Decimal(18, 4), newStock)
-              .query(`
-                UPDATE Inventory
-                SET CurrentStock = @NewStock,
-                    UpdatedAt = SYSUTCDATETIME()
-                WHERE MaterialId = @MaterialId
-              `);
-          } else {
-            await new sql.Request(transaction)
-              .input("MaterialId", sql.Int, current.materialId)
-              .input("NewStock", sql.Decimal(18, 4), newStock)
-              .query(`
-                INSERT INTO Inventory (MaterialId, CurrentStock, MinimumStock, UpdatedAt)
-                VALUES (@MaterialId, @NewStock, 0, SYSUTCDATETIME())
-              `);
-          }
-
-          await new sql.Request(transaction)
-            .input("MaterialId", sql.Int, current.materialId)
-            .input("Quantity", sql.Decimal(18, 4), -delta)
-            .input("PreviousStock", sql.Decimal(18, 4), previousStock)
-            .input("NewStock", sql.Decimal(18, 4), newStock)
-            .input("ReferenceId", sql.Int, requisitionId)
-            .input("CreatedByUserId", sql.Int, userId)
-            .input("Notes", sql.NVarChar(500), input.comment ?? "Entrega de requisicion")
-            .query(`
-              INSERT INTO InventoryMovements
-                (MaterialId, MovementType, Quantity, PreviousStock, NewStock, ReferenceType, ReferenceId, CreatedByUserId, Notes)
-              VALUES
-                (@MaterialId, 'DELIVERY', @Quantity, @PreviousStock, @NewStock, 'REQUISITION', @ReferenceId, @CreatedByUserId, @Notes)
-            `);
-
-          if (newStock <= minimumStock) {
-            lowStock.push({
-              materialId: current.materialId,
-              materialName: inventory?.MaterialName ?? "",
-              currentStock: newStock,
-              minimumStock
-            });
-          }
-        }
       }
 
       const deliveryStateResult = await new sql.Request(transaction)
@@ -742,7 +678,6 @@ export class RequisitionsRepository {
       await transaction.commit();
       return {
         requisition: await this.findForAdmin(requisitionId),
-        lowStock,
         statusCode,
         statusName
       };

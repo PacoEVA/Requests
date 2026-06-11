@@ -152,7 +152,6 @@ export function EmployeeRequisitionDetailPage() {
                     <th>Solicitado</th>
                     <th>Aprobado</th>
                     <th>Entregado</th>
-                    <th>Unidad</th>
                     <th>Comentario</th>
                   </tr>
                 </thead>
@@ -163,7 +162,6 @@ export function EmployeeRequisitionDetailPage() {
                       <td>{numberText(item, "quantityRequested", "QuantityRequested")}</td>
                       <td>{numberText(item, "quantityApproved", "QuantityApproved")}</td>
                       <td>{numberText(item, "quantityDelivered", "QuantityDelivered")}</td>
-                      <td>{text(item, "unitOfMeasure", "UnitOfMeasure", text(item, "materialUnitOfMeasure", "MaterialUnitOfMeasure", "-"))}</td>
                       <td>{text(item, "comment", "Comment", "-")}</td>
                     </tr>
                   ))}

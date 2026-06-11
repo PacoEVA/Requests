@@ -17,7 +17,6 @@ const createRequisitionSchema = z.object({
         materialId: z.number().int().positive().optional(),
         manualMaterialName: z.string().max(200).optional(),
         quantityRequested: z.number().positive(),
-        unitOfMeasure: z.string().max(50).optional(),
         comment: z.string().max(500).optional()
       })
     )

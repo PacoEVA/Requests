@@ -388,7 +388,7 @@ export class RequisitionsService {
     });
   }
 
-  private async afterDelivered(meta: RequisitionMeta, result: { requisition: Record<string, unknown> | null; lowStock: Array<Record<string, unknown>>; statusCode: string; statusName: string }) {
+  private async afterDelivered(meta: RequisitionMeta, result: { requisition: Record<string, unknown> | null; statusCode: string; statusName: string }) {
     const code = recordCode(result.requisition) || meta.code;
     await this.notifyEmployee(meta.employeeId, meta.id, "Entrega registrada", `${code} cambio a ${result.statusName}`, "DELIVERY_REGISTERED");
 
@@ -405,9 +405,6 @@ export class RequisitionsService {
         message: `Tu requisicion ${code} cambio a ${result.statusName}`
       });
 
-      for (const item of result.lowStock) {
-        io.to("role:Admin").to("role:Compras").emit("inventory:lowStock", item);
-      }
     });
 
     await this.emitDashboardSummary();

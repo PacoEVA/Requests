@@ -23,6 +23,9 @@ export const errorMiddleware: ErrorRequestHandler = (error, _req, res, _next) =>
   }
 
   res.status(statusCode).json({
+    success: false,
+    message: statusCode >= 500 ? "Error interno del servidor" : error.message,
+    errors: [],
     error: {
       code,
       message: statusCode >= 500 ? "Error interno del servidor" : error.message

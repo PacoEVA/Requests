@@ -4,7 +4,6 @@ export interface RequisitionItemInput {
   materialId?: number;
   manualMaterialName?: string;
   quantityRequested: number;
-  unitOfMeasure?: string;
   comment?: string;
 }
 

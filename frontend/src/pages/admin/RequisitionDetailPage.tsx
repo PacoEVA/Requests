@@ -1,10 +1,11 @@
-import { MessageSquare, Save } from "lucide-react";
+import { MessageSquare, PackageCheck, Save, UserPlus } from "lucide-react";
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 import { PageHeader } from "../../components/common/PageHeader";
 import { StatusBadge } from "../../components/common/StatusBadge";
 import { useAuth } from "../../contexts/AuthContext";
 import { useSocket } from "../../contexts/SocketContext";
+import { adminService } from "../../services/admin.service";
 import { requisitionService } from "../../services/requisition.service";
 import type { RequisitionDetail } from "../../types/requisition.types";
 import { recordValue } from "../../utils/record";
@@ -57,6 +58,10 @@ export function RequisitionDetailPage() {
   const [statusCode, setStatusCode] = useState("IN_REVIEW");
   const [reason, setReason] = useState("");
   const [comment, setComment] = useState("");
+  const [users, setUsers] = useState<Array<Record<string, unknown>>>([]);
+  const [assignedToUserId, setAssignedToUserId] = useState("");
+  const [approvedQuantities, setApprovedQuantities] = useState<Record<number, string>>({});
+  const [deliveredQuantities, setDeliveredQuantities] = useState<Record<number, string>>({});
   const [notice, setNotice] = useState("");
   const [error, setError] = useState("");
 
@@ -65,6 +70,11 @@ export function RequisitionDetailPage() {
     requisitionService.adminDetail(token, id).then((response) => setRequisition(response.requisition)).catch(() => setRequisition(null));
     requisitionService.comments({ token }, id).then((response) => setComments(asRecords(response.comments))).catch(() => setComments([]));
   }, [id, token]);
+
+  useEffect(() => {
+    if (!token) return;
+    adminService.users(token).then((response) => setUsers(asRecords(response.users))).catch(() => setUsers([]));
+  }, [token]);
 
   useEffect(() => {
     loadDetail();
@@ -108,6 +118,21 @@ export function RequisitionDetailPage() {
     }
   }, [allowedStatusOptions]);
 
+  useEffect(() => {
+    const nextApproved: Record<number, string> = {};
+    const nextDelivered: Record<number, string> = {};
+
+    for (const item of items) {
+      const itemId = Number(item.Id ?? item.id ?? 0);
+      if (!itemId) continue;
+      nextApproved[itemId] = String(item.QuantityApproved ?? item.quantityApproved ?? item.QuantityRequested ?? item.quantityRequested ?? 0);
+      nextDelivered[itemId] = String(item.QuantityDelivered ?? item.quantityDelivered ?? 0);
+    }
+
+    setApprovedQuantities(nextApproved);
+    setDeliveredQuantities(nextDelivered);
+  }, [items]);
+
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
     setError("");
@@ -116,12 +141,64 @@ export function RequisitionDetailPage() {
     if (!token || isFinal || allowedStatusOptions.length === 0) return;
 
     try {
-      await requisitionService.updateStatus(token, id, statusCode, reason.trim() || undefined);
+      const approvalItems =
+        statusCode === "APPROVED"
+          ? items.map((item) => {
+              const itemId = Number(item.Id ?? item.id ?? 0);
+              return {
+                requisitionItemId: itemId,
+                quantityApproved: Number(approvedQuantities[itemId] ?? item.QuantityRequested ?? item.quantityRequested ?? 0)
+              };
+            })
+          : undefined;
+
+      await requisitionService.updateStatus(token, id, statusCode, reason.trim() || undefined, approvalItems);
       setReason("");
       setNotice("Estado actualizado correctamente.");
       loadDetail();
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : "No se pudo actualizar el estado.");
+    }
+  }
+
+  async function assignResponsible(event: FormEvent) {
+    event.preventDefault();
+    setError("");
+    setNotice("");
+
+    if (!token || !assignedToUserId) return;
+
+    try {
+      await requisitionService.assign(token, id, Number(assignedToUserId));
+      setNotice("Responsable asignado.");
+      loadDetail();
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : "No se pudo asignar responsable.");
+    }
+  }
+
+  async function deliver(event: FormEvent) {
+    event.preventDefault();
+    setError("");
+    setNotice("");
+
+    if (!token) return;
+
+    try {
+      await requisitionService.deliver(token, id, {
+        items: items.map((item) => {
+          const itemId = Number(item.Id ?? item.id ?? 0);
+          return {
+            requisitionItemId: itemId,
+            quantityDelivered: Number(deliveredQuantities[itemId] ?? item.QuantityDelivered ?? item.quantityDelivered ?? 0)
+          };
+        }),
+        comment: reason.trim() || undefined
+      });
+      setNotice("Entrega registrada.");
+      loadDetail();
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : "No se pudo registrar la entrega.");
     }
   }
 
@@ -181,7 +258,6 @@ export function RequisitionDetailPage() {
                     <th>Solicitado</th>
                     <th>Aprobado</th>
                     <th>Entregado</th>
-                    <th>Unidad</th>
                     <th>Comentario</th>
                   </tr>
                 </thead>
@@ -192,7 +268,6 @@ export function RequisitionDetailPage() {
                       <td>{numberText(item, "quantityRequested", "QuantityRequested")}</td>
                       <td>{numberText(item, "quantityApproved", "QuantityApproved")}</td>
                       <td>{numberText(item, "quantityDelivered", "QuantityDelivered")}</td>
-                      <td>{text(item, "unitOfMeasure", "UnitOfMeasure", text(item, "materialUnitOfMeasure", "MaterialUnitOfMeasure", "-"))}</td>
                       <td>{text(item, "comment", "Comment", "-")}</td>
                     </tr>
                   ))}
@@ -258,8 +333,73 @@ export function RequisitionDetailPage() {
               Motivo
               <textarea value={reason} disabled={isFinal || allowedStatusOptions.length === 0} onChange={(event) => setReason(event.target.value)} rows={4} />
             </label>
+            {statusCode === "APPROVED" && !isFinal ? (
+              <div className="mini-lines">
+                <strong>Cantidades aprobadas</strong>
+                {items.map((item) => {
+                  const itemId = Number(item.Id ?? item.id ?? 0);
+                  return (
+                    <label key={itemId}>
+                      {text(item, "materialName", "MaterialName", text(item, "manualMaterialName", "ManualMaterialName", "Material"))}
+                      <input
+                        min="0"
+                        step="0.01"
+                        type="number"
+                        value={approvedQuantities[itemId] ?? ""}
+                        onChange={(event) => setApprovedQuantities({ ...approvedQuantities, [itemId]: event.target.value })}
+                      />
+                    </label>
+                  );
+                })}
+              </div>
+            ) : null}
             <button className="primary-button" type="submit" disabled={isFinal || allowedStatusOptions.length === 0}>
               <Save size={18} /> Guardar estado
+            </button>
+          </form>
+
+          <form className="panel-form" onSubmit={assignResponsible}>
+            <h2>Asignar responsable</h2>
+            <label>
+              Usuario
+              <select value={assignedToUserId} disabled={isFinal} onChange={(event) => setAssignedToUserId(event.target.value)}>
+                <option value="">Seleccione</option>
+                {users.map((user) => {
+                  const userId = Number(user.Id ?? user.id ?? 0);
+                  return (
+                    <option key={userId} value={userId}>
+                      {text(user, "fullName", "FullName", "Usuario")}
+                    </option>
+                  );
+                })}
+              </select>
+            </label>
+            <button className="secondary-button" type="submit" disabled={isFinal || !assignedToUserId}>
+              <UserPlus size={18} /> Asignar
+            </button>
+          </form>
+
+          <form className="panel-form" onSubmit={deliver}>
+            <h2>Registrar entrega</h2>
+            <div className="mini-lines">
+              {items.map((item) => {
+                const itemId = Number(item.Id ?? item.id ?? 0);
+                return (
+                  <label key={itemId}>
+                    {text(item, "materialName", "MaterialName", text(item, "manualMaterialName", "ManualMaterialName", "Material"))}
+                    <input
+                      min="0"
+                      step="0.01"
+                      type="number"
+                      value={deliveredQuantities[itemId] ?? ""}
+                      onChange={(event) => setDeliveredQuantities({ ...deliveredQuantities, [itemId]: event.target.value })}
+                    />
+                  </label>
+                );
+              })}
+            </div>
+            <button className="primary-button" type="submit" disabled={isFinal || items.length === 0}>
+              <PackageCheck size={18} /> Guardar entrega
             </button>
           </form>
 

@@ -19,9 +19,15 @@ export async function apiRequest<T>(path: string, options: ApiOptions = {}): Pro
 
   if (!response.ok) {
     const payload = await response.json().catch(() => null);
-    const message = payload?.error?.message ?? "No se pudo completar la operación";
+    const message = payload?.message ?? payload?.error?.message ?? "No se pudo completar la operacion";
     throw new Error(message);
   }
 
-  return response.json() as Promise<T>;
+  const payload = await response.json();
+
+  if (payload && typeof payload === "object" && payload.success === true && "data" in payload) {
+    return payload.data as T;
+  }
+
+  return payload as T;
 }

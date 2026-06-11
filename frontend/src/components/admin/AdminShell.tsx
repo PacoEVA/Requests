@@ -1,6 +1,5 @@
 import {
   BarChart3,
-  Boxes,
   ClipboardList,
   FileBarChart,
   LayoutDashboard,
@@ -45,9 +44,6 @@ export function AdminShell() {
           <span className="nav-section">Administración</span>
           <NavLink to="/admin/users">
             <Users size={18} /> Usuarios
-          </NavLink>
-          <NavLink to="/admin/inventory">
-            <Boxes size={18} /> Inventario
           </NavLink>
           <NavLink to="/admin/reports">
             <FileBarChart size={18} /> Reportes

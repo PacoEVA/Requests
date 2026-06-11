@@ -23,7 +23,6 @@ export interface RequisitionItemDraft {
   materialId?: number;
   manualMaterialName?: string;
   quantityRequested: number;
-  unitOfMeasure?: string;
   comment?: string;
 }
 

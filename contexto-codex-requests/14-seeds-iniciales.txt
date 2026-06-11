@@ -27,17 +27,6 @@ Aunque no exista tabla inicialmente, usar estos valores:
 - Alta
 - Urgente
 
-UNIDADES DE MEDIDA SUGERIDAS
-Si se crea tabla futura o catálogo simple:
-- Unidad
-- Caja
-- Paquete
-- Resma
-- Galón
-- Litro
-- Metro
-- Rollo
-
 DEPARTAMENTOS DE EJEMPLO
 - Administración
 - Contabilidad
@@ -47,23 +36,16 @@ DEPARTAMENTOS DE EJEMPLO
 - Recursos Humanos
 - Tecnología
 
-CATEGORÍAS DE MATERIALES DE EJEMPLO
-- Papelería
-- Limpieza
-- Oficina
-- Tecnología
-- Otros
-
 MATERIALES DE EJEMPLO
-- Papel bond carta / Resma / Papelería
-- Lapicero azul / Unidad / Oficina
-- Lapicero negro / Unidad / Oficina
-- Folder manila / Unidad / Papelería
-- Grapas / Caja / Oficina
-- Cinta adhesiva / Unidad / Oficina
-- Tóner / Unidad / Tecnología
-- Cloro / Galón / Limpieza
-- Papel higiénico / Paquete / Limpieza
+- MAT-0001 / Papel bond carta
+- MAT-0002 / Lapicero azul
+- MAT-0003 / Lapicero negro
+- MAT-0004 / Folder manila
+- MAT-0005 / Grapas
+- MAT-0006 / Cinta adhesiva
+- MAT-0007 / Tóner
+- MAT-0008 / Cloro
+- MAT-0009 / Papel higiénico
 
 USUARIO ADMIN INICIAL
 Crear usuario admin inicial por seed:
