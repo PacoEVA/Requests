@@ -1,6 +1,6 @@
 import { apiStatusMessage } from "../utils/friendlyError";
 
-const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:4100/api";
+const API_URL = import.meta.env.VITE_API_URL || "/api";
 
 export interface ApiOptions extends RequestInit {
   token?: string | null;

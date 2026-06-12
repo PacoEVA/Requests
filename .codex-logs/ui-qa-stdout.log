@@ -25,3 +25,11 @@
 [frontend]   [32m➜[39m  [1mLocal[22m:   [36mhttp://127.0.0.1:[1m5173[22m/[39m
 [frontend] [2m8:04:17 a.m.[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [optimizer] bundling dependencies...
 [backend] Requests API listening on http://localhost:4100
+[frontend] npm error Lifecycle script `dev` failed with error:
+[frontend] npm error code 1
+[frontend] npm error path C:\Users\sgarcias\Desktop\Requests\frontend
+[frontend] npm error workspace @requests/frontend@0.1.0
+[frontend] npm error location C:\Users\sgarcias\Desktop\Requests\frontend
+[frontend] npm error command failed
+[frontend] npm error command C:\WINDOWS\system32\cmd.exe /d /s /c vite
+[frontend] cross-env VITE_API_URL=http://localhost:4100/api VITE_SOCKET_URL=http://localhost:4100 npm run dev:frontend exited with code 1
