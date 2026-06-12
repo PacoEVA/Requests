@@ -253,6 +253,10 @@ button:disabled {
   line-height: 1.25;
 }
 
+.surface-actions {
+  margin-top: 16px;
+}
+
 .identify-screen {
   display: grid;
   min-height: 100vh;
@@ -1045,6 +1049,73 @@ td a {
   background: #ffffff;
 }
 
+.empty-state-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 20px;
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--radius);
+  color: var(--muted);
+  background:
+    linear-gradient(180deg, rgb(34 111 127 / 4%), transparent),
+    #ffffff;
+}
+
+.empty-state-card svg {
+  flex: 0 0 auto;
+  color: var(--primary);
+}
+
+.empty-state-card strong {
+  display: block;
+  margin-bottom: 4px;
+  color: #25323e;
+  font-size: 0.98rem;
+}
+
+.empty-state-card p {
+  margin: 0;
+  line-height: 1.5;
+}
+
+.app-fallback-screen {
+  display: grid;
+  min-height: 100vh;
+  place-items: center;
+  padding: 24px;
+  background:
+    linear-gradient(180deg, #eef3f5 0, var(--bg) 360px),
+    var(--bg);
+}
+
+.app-fallback-card {
+  display: grid;
+  gap: 14px;
+  width: min(560px, 100%);
+  padding: 28px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: #ffffff;
+  box-shadow: var(--shadow-md);
+}
+
+.app-fallback-card > svg {
+  color: var(--danger);
+}
+
+.app-fallback-card h1 {
+  margin: 0;
+  color: #16212b;
+  font-size: 1.55rem;
+}
+
+.app-fallback-card p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
 .toast-stack {
   position: fixed;
   right: 22px;
@@ -1054,6 +1125,69 @@ td a {
   gap: 12px;
   width: min(380px, calc(100vw - 32px));
   pointer-events: none;
+}
+
+.feedback-stack {
+  position: fixed;
+  top: 22px;
+  right: 22px;
+  z-index: 60;
+  display: grid;
+  gap: 12px;
+  width: min(400px, calc(100vw - 32px));
+  pointer-events: none;
+}
+
+.feedback-toast {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: start;
+  padding: 14px;
+  border: 1px solid var(--line-strong);
+  border-left: 4px solid var(--primary);
+  border-radius: var(--radius);
+  background: #ffffff;
+  box-shadow: 0 18px 40px rgba(20, 32, 42, 0.18);
+  pointer-events: auto;
+}
+
+.feedback-toast > svg {
+  margin-top: 2px;
+}
+
+.feedback-toast strong {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--text);
+  font-size: 0.92rem;
+}
+
+.feedback-toast p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.86rem;
+  line-height: 1.45;
+}
+
+.feedback-error {
+  border-left-color: var(--danger);
+}
+
+.feedback-error > svg {
+  color: var(--danger);
+}
+
+.feedback-success {
+  border-left-color: var(--success);
+}
+
+.feedback-success > svg {
+  color: var(--success);
+}
+
+.feedback-info > svg {
+  color: var(--primary);
 }
 
 .realtime-toast {

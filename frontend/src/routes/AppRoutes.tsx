@@ -1,7 +1,8 @@
-import { Navigate, Route, Routes } from "react-router-dom";
+import { Route, Routes } from "react-router-dom";
 import { AdminShell } from "../components/admin/AdminShell";
 import { EmployeeShell } from "../components/employee/EmployeeShell";
 import { AdminProtectedRoute, AdminRoleRoute, EmployeeProtectedRoute } from "./ProtectedRoute";
+import { HomeRedirect } from "./HomeRedirect";
 import { CreateRequisitionPage } from "../pages/employee/CreateRequisitionPage";
 import { EmployeeHomePage } from "../pages/employee/EmployeeHomePage";
 import { EmployeeIdentifyPage } from "../pages/employee/EmployeeIdentifyPage";
@@ -21,7 +22,7 @@ import { UsersPage } from "../pages/admin/UsersPage";
 export function AppRoutes() {
   return (
     <Routes>
-      <Route path="/" element={<Navigate to="/employee" replace />} />
+      <Route path="/" element={<HomeRedirect />} />
       <Route path="/employee/identify" element={<EmployeeIdentifyPage />} />
       <Route element={<EmployeeProtectedRoute />}>
         <Route element={<EmployeeShell />}>
@@ -49,7 +50,7 @@ export function AppRoutes() {
           <Route path="/admin/reports" element={<ReportsPage />} />
         </Route>
       </Route>
-      <Route path="*" element={<Navigate to="/employee" replace />} />
+      <Route path="*" element={<HomeRedirect />} />
     </Routes>
   );
 }

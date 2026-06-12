@@ -1,3 +1,5 @@
+import { apiStatusMessage } from "../utils/friendlyError";
+
 const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:4100/api";
 
 export interface ApiOptions extends RequestInit {
@@ -12,15 +14,21 @@ export async function apiRequest<T>(path: string, options: ApiOptions = {}): Pro
   if (options.token) headers.set("Authorization", `Bearer ${options.token}`);
   if (options.employeeToken) headers.set("x-employee-token", options.employeeToken);
 
-  const response = await fetch(`${API_URL}${path}`, {
-    ...options,
-    headers
-  });
+  let response: Response;
+
+  try {
+    response = await fetch(`${API_URL}${path}`, {
+      ...options,
+      headers
+    });
+  } catch (error) {
+    throw new Error(apiStatusMessage(0, error instanceof Error ? error.message : undefined));
+  }
 
   if (!response.ok) {
     const payload = await response.json().catch(() => null);
-    const message = payload?.message ?? payload?.error?.message ?? "No se pudo completar la operacion";
-    throw new Error(message);
+    const message = payload?.message ?? payload?.error?.message;
+    throw new Error(apiStatusMessage(response.status, message));
   }
 
   const payload = await response.json();

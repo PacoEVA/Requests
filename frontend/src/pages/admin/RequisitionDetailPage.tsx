@@ -1,6 +1,7 @@
 import { MessageSquare, PackageCheck, Save, UserPlus } from "lucide-react";
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
+import { EmptyState } from "../../components/common/EmptyState";
 import { PageHeader } from "../../components/common/PageHeader";
 import { StatusBadge } from "../../components/common/StatusBadge";
 import { useAuth } from "../../contexts/AuthContext";
@@ -8,6 +9,7 @@ import { useSocket } from "../../contexts/SocketContext";
 import { adminService } from "../../services/admin.service";
 import { requisitionService } from "../../services/requisition.service";
 import type { RequisitionDetail } from "../../types/requisition.types";
+import { friendlyErrorMessage } from "../../utils/friendlyError";
 import { humanizeHistoryNotes, humanizeHistoryTitle } from "../../utils/requisitionHistory";
 import { recordValue } from "../../utils/record";
 
@@ -78,6 +80,8 @@ export function RequisitionDetailPage() {
   const [reason, setReason] = useState("");
   const [comment, setComment] = useState("");
   const [users, setUsers] = useState<Array<Record<string, unknown>>>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
   const [assignedToUserId, setAssignedToUserId] = useState("");
   const [approvedQuantities, setApprovedQuantities] = useState<
     Record<number, string>
@@ -89,11 +93,20 @@ export function RequisitionDetailPage() {
   const [error, setError] = useState("");
 
   const loadDetail = useCallback(() => {
-    if (!token || !id) return;
+    if (!token || !id) {
+      setIsLoading(false);
+      return;
+    }
+    setIsLoading(true);
+    setLoadError("");
     requisitionService
       .adminDetail(token, id)
       .then((response) => setRequisition(response.requisition))
-      .catch(() => setRequisition(null));
+      .catch((requestError) => {
+        setRequisition(null);
+        setLoadError(friendlyErrorMessage(requestError, "No se pudo cargar la requisicion."));
+      })
+      .finally(() => setIsLoading(false));
     requisitionService
       .comments({ token }, id)
       .then((response) => setComments(asRecords(response.comments)))
@@ -170,6 +183,36 @@ export function RequisitionDetailPage() {
     setApprovedQuantities(nextApproved);
     setDeliveredQuantities(nextDelivered);
   }, [items]);
+
+  if (isLoading) {
+    return (
+      <>
+        <PageHeader title="Cargando requisicion" eyebrow="Gestion" />
+        <section className="surface">
+          <EmptyState title="Estamos cargando el detalle" message="Espere un momento mientras buscamos la informacion de la requisicion." />
+        </section>
+      </>
+    );
+  }
+
+  if (!requisition) {
+    return (
+      <>
+        <PageHeader title="Requisicion no disponible" eyebrow="Gestion" />
+        <section className="surface">
+          <EmptyState
+            title={loadError ? "No pudimos abrir esta requisicion" : "Esta requisicion no existe"}
+            message={loadError || "Verifique el codigo o vuelva al listado para seleccionar otra requisicion."}
+          />
+          <div className="button-row surface-actions">
+            <Link className="secondary-button" to="/admin/requisitions">
+              Volver a requisiciones
+            </Link>
+          </div>
+        </section>
+      </>
+    );
+  }
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault();

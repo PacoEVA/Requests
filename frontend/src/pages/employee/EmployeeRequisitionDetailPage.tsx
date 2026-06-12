@@ -1,12 +1,14 @@
 import { MessageSquare, XCircle } from "lucide-react";
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
+import { EmptyState } from "../../components/common/EmptyState";
 import { PageHeader } from "../../components/common/PageHeader";
 import { StatusBadge } from "../../components/common/StatusBadge";
 import { useEmployee } from "../../contexts/EmployeeContext";
 import { useSocket } from "../../contexts/SocketContext";
 import { requisitionService } from "../../services/requisition.service";
 import type { RequisitionDetail } from "../../types/requisition.types";
+import { friendlyErrorMessage } from "../../utils/friendlyError";
 import { humanizeHistoryNotes, humanizeHistoryTitle } from "../../utils/requisitionHistory";
 import { recordValue } from "../../utils/record";
 
@@ -40,13 +42,24 @@ export function EmployeeRequisitionDetailPage() {
   const [comment, setComment] = useState("");
   const [notice, setNotice] = useState("");
   const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
 
   const loadDetail = useCallback(() => {
-    if (!employeeToken || !id) return;
+    if (!employeeToken || !id) {
+      setIsLoading(false);
+      return;
+    }
+    setIsLoading(true);
+    setLoadError("");
     requisitionService
       .myDetail(employeeToken, id)
       .then((response) => setRequisition(response.requisition))
-      .catch(() => setRequisition(null));
+      .catch((requestError) => {
+        setRequisition(null);
+        setLoadError(friendlyErrorMessage(requestError, "No se pudo cargar la requisicion."));
+      })
+      .finally(() => setIsLoading(false));
     requisitionService.comments({ employeeToken }, id).then((response) => setComments(asRecords(response.comments))).catch(() => setComments([]));
   }, [employeeToken, id]);
 
@@ -79,6 +92,36 @@ export function EmployeeRequisitionDetailPage() {
   const isFinal = finalStatusCodes.has(statusCode);
   const items = useMemo(() => asRecords(requisition?.items), [requisition]);
   const history = useMemo(() => asRecords(requisition?.history), [requisition]);
+
+  if (isLoading) {
+    return (
+      <>
+        <PageHeader title="Cargando requisicion" eyebrow="Seguimiento" />
+        <section className="surface">
+          <EmptyState title="Estamos cargando el detalle" message="Espere un momento mientras buscamos la informacion de su requisicion." />
+        </section>
+      </>
+    );
+  }
+
+  if (!requisition) {
+    return (
+      <>
+        <PageHeader title="Requisicion no disponible" eyebrow="Seguimiento" />
+        <section className="surface">
+          <EmptyState
+            title={loadError ? "No pudimos abrir esta requisicion" : "Esta requisicion no existe"}
+            message={loadError || "Vuelva a sus requisiciones y seleccione una solicitud disponible."}
+          />
+          <div className="button-row surface-actions">
+            <Link className="secondary-button" to="/employee/requisitions">
+              Volver a mis requisiciones
+            </Link>
+          </div>
+        </section>
+      </>
+    );
+  }
 
   async function cancel() {
     setError("");

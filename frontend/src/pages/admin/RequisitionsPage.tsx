@@ -1,6 +1,7 @@
 import { Search } from "lucide-react";
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
+import { EmptyState } from "../../components/common/EmptyState";
 import { PageHeader } from "../../components/common/PageHeader";
 import { StatusBadge } from "../../components/common/StatusBadge";
 import { useAuth } from "../../contexts/AuthContext";
@@ -9,6 +10,7 @@ import { adminService } from "../../services/admin.service";
 import { requisitionService } from "../../services/requisition.service";
 import type { Department } from "../../types/employee.types";
 import type { RequisitionSummary } from "../../types/requisition.types";
+import { friendlyErrorMessage } from "../../utils/friendlyError";
 import { recordId, recordName, recordValue } from "../../utils/record";
 
 const statusOptions = [
@@ -32,6 +34,7 @@ export function RequisitionsPage() {
   const supervisorDepartmentId = user?.role === "Supervisor" ? String(user.departmentId ?? "") : "";
   const [requisitions, setRequisitions] = useState<RequisitionSummary[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
+  const [loadError, setLoadError] = useState("");
   const [filters, setFilters] = useState({
     code: "",
     status: "",
@@ -60,7 +63,14 @@ export function RequisitionsPage() {
 
   const loadRequisitions = useCallback(() => {
     if (!token) return;
-    requisitionService.adminList(token, queryFilters).then((response) => setRequisitions(response.requisitions)).catch(() => setRequisitions([]));
+    setLoadError("");
+    requisitionService
+      .adminList(token, queryFilters)
+      .then((response) => setRequisitions(response.requisitions))
+      .catch((error) => {
+        setRequisitions([]);
+        setLoadError(friendlyErrorMessage(error, "No se pudo cargar el listado de requisiciones."));
+      });
   }, [queryFilters, token]);
 
   useEffect(() => {
@@ -167,7 +177,15 @@ export function RequisitionsPage() {
           </button>
         </form>
 
-        <div className="data-table">
+        {loadError ? <p className="form-error">{loadError}</p> : null}
+
+        {requisitions.length === 0 ? (
+          <EmptyState
+            title={loadError ? "No se pudieron mostrar las requisiciones" : "No hay requisiciones con estos filtros"}
+            message={loadError ? "Revise la conexion o intente nuevamente." : "Ajuste los filtros o espere nuevas solicitudes de empleados."}
+          />
+        ) : (
+          <div className="data-table">
           <table>
             <thead>
               <tr>
@@ -202,7 +220,8 @@ export function RequisitionsPage() {
               })}
             </tbody>
           </table>
-        </div>
+          </div>
+        )}
       </section>
     </>
   );

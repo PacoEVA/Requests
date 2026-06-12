@@ -1,10 +1,12 @@
 import { jsPDF } from "jspdf";
 import { Download, FileBarChart, FileText, Search } from "lucide-react";
 import { FormEvent, useState } from "react";
+import { EmptyState } from "../../components/common/EmptyState";
 import { PageHeader } from "../../components/common/PageHeader";
 import { useAuth } from "../../contexts/AuthContext";
 import { requisitionService } from "../../services/requisition.service";
 import type { RequisitionSummary } from "../../types/requisition.types";
+import { friendlyErrorMessage } from "../../utils/friendlyError";
 import { humanizeHistoryNotes, humanizeHistoryTitle } from "../../utils/requisitionHistory";
 import { recordValue } from "../../utils/record";
 
@@ -201,6 +203,7 @@ export function ReportsPage() {
     materialSearch: ""
   });
   const [message, setMessage] = useState("");
+  const [messageType, setMessageType] = useState<"error" | "success">("success");
   const [exportingId, setExportingId] = useState<number | null>(null);
 
   async function onSubmit(event: FormEvent) {
@@ -208,9 +211,16 @@ export function ReportsPage() {
     if (!token) return;
 
     setMessage("");
-    const response = await requisitionService.adminList(token, { ...filters, pageSize: 500 });
-    setRows(response.requisitions);
-    setMessage(`${response.requisitions.length} registros encontrados.`);
+    try {
+      const response = await requisitionService.adminList(token, { ...filters, pageSize: 500 });
+      setRows(response.requisitions);
+      setMessageType("success");
+      setMessage(`${response.requisitions.length} registros encontrados.`);
+    } catch (error) {
+      setRows([]);
+      setMessageType("error");
+      setMessage(friendlyErrorMessage(error, "No se pudo generar el reporte."));
+    }
   }
 
   async function downloadRequisitionPdf(requisitionId: number) {
@@ -221,9 +231,11 @@ export function ReportsPage() {
       setExportingId(requisitionId);
       const response = await requisitionService.adminDetail(token, String(requisitionId));
       saveRequisitionPdf(response.requisition as Record<string, unknown>);
+      setMessageType("success");
       setMessage("PDF generado correctamente.");
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "No se pudo generar el PDF.");
+      setMessageType("error");
+      setMessage(friendlyErrorMessage(error, "No se pudo generar el PDF."));
     } finally {
       setExportingId(null);
     }
@@ -268,14 +280,17 @@ export function ReportsPage() {
             <Download size={18} /> Exportar CSV
           </button>
         </form>
-        {message ? <p className="form-success">{message}</p> : null}
+        {message ? <p className={messageType === "error" ? "form-error" : "form-success"}>{message}</p> : null}
       </section>
 
       <section className="surface">
         <h2>
           <FileBarChart size={18} /> Resultado
         </h2>
-        <div className="data-table compact-table">
+        {rows.length === 0 ? (
+          <EmptyState title="No hay resultados para mostrar" message="Genere un reporte o ajuste los filtros para consultar requisiciones." />
+        ) : (
+          <div className="data-table compact-table">
           <table>
             <thead>
               <tr>
@@ -315,7 +330,8 @@ export function ReportsPage() {
               })}
             </tbody>
           </table>
-        </div>
+          </div>
+        )}
       </section>
     </>
   );

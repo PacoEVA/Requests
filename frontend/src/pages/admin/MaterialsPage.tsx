@@ -1,14 +1,18 @@
 import { Package, Plus } from "lucide-react";
 import { FormEvent, useCallback, useEffect, useState } from "react";
+import { EmptyState } from "../../components/common/EmptyState";
 import { PageHeader } from "../../components/common/PageHeader";
 import { useAuth } from "../../contexts/AuthContext";
 import { materialService } from "../../services/material.service";
 import type { Material } from "../../types/material.types";
+import { friendlyErrorMessage } from "../../utils/friendlyError";
 import { recordId, recordName, recordValue } from "../../utils/record";
 
 export function MaterialsPage() {
   const { token } = useAuth();
   const [materials, setMaterials] = useState<Material[]>([]);
+  const [message, setMessage] = useState("");
+  const [messageType, setMessageType] = useState<"error" | "success">("success");
   const [editingMaterialId, setEditingMaterialId] = useState<number | null>(null);
   const [form, setForm] = useState({
     itemCode: "",
@@ -19,7 +23,16 @@ export function MaterialsPage() {
 
   const reload = useCallback(() => {
     if (!token) return;
-    materialService.adminList(token).then((response) => setMaterials(response.materials)).catch(() => setMaterials([]));
+    materialService
+      .adminList(token)
+      .then((response) => {
+        setMaterials(response.materials);
+      })
+      .catch((error) => {
+        setMaterials([]);
+        setMessageType("error");
+        setMessage(friendlyErrorMessage(error, "No se pudo cargar el catalogo de materiales."));
+      });
   }, [token]);
 
   useEffect(() => {
@@ -29,6 +42,7 @@ export function MaterialsPage() {
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
     if (!token) return;
+    setMessage("");
 
     const payload = {
       itemCode: form.itemCode.trim() || undefined,
@@ -37,21 +51,37 @@ export function MaterialsPage() {
       isRequestable: form.isRequestable
     };
 
-    if (editingMaterialId) {
-      await materialService.update(token, editingMaterialId, payload);
-    } else {
-      await materialService.create(token, payload);
+    try {
+      if (editingMaterialId) {
+        await materialService.update(token, editingMaterialId, payload);
+      } else {
+        await materialService.create(token, payload);
+      }
+    } catch (error) {
+      setMessageType("error");
+      setMessage(friendlyErrorMessage(error, "No se pudo guardar el material."));
+      return;
     }
 
     setEditingMaterialId(null);
     setForm({ itemCode: "", name: "", description: "", isRequestable: true });
+    setMessageType("success");
+    setMessage(editingMaterialId ? "Material actualizado correctamente." : "Material creado correctamente.");
     reload();
   }
 
   async function toggleMaterial(id: number, isActive: boolean) {
     if (!token) return;
-    await materialService.setActive(token, id, !isActive);
-    reload();
+    setMessage("");
+    try {
+      await materialService.setActive(token, id, !isActive);
+      setMessageType("success");
+      setMessage(isActive ? "Material desactivado correctamente." : "Material activado correctamente.");
+      reload();
+    } catch (error) {
+      setMessageType("error");
+      setMessage(friendlyErrorMessage(error, "No se pudo cambiar el estado del material."));
+    }
   }
 
   return (
@@ -85,11 +115,15 @@ export function MaterialsPage() {
           <button className="primary-button span-2" type="submit">
             <Plus size={18} /> {editingMaterialId ? "Guardar material" : "Crear material"}
           </button>
+          {message ? <p className={messageType === "error" ? "form-error span-2" : "form-success span-2"}>{message}</p> : null}
         </form>
 
         <div className="surface">
           <h2>Listado de materiales</h2>
-          <div className="data-table compact-table">
+          {materials.length === 0 ? (
+            <EmptyState title="No hay materiales para mostrar" message="Cuando cree materiales, apareceran en este listado." />
+          ) : (
+            <div className="data-table compact-table">
             <table>
               <thead>
                 <tr>
@@ -140,7 +174,8 @@ export function MaterialsPage() {
                 })}
               </tbody>
             </table>
-          </div>
+            </div>
+          )}
         </div>
       </section>
     </>

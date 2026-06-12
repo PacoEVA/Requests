@@ -1,14 +1,18 @@
 import { Plus, Workflow } from "lucide-react";
 import { FormEvent, useCallback, useEffect, useState } from "react";
+import { EmptyState } from "../../components/common/EmptyState";
 import { PageHeader } from "../../components/common/PageHeader";
 import { useAuth } from "../../contexts/AuthContext";
 import { adminService } from "../../services/admin.service";
 import type { Department } from "../../types/employee.types";
+import { friendlyErrorMessage } from "../../utils/friendlyError";
 import { recordId, recordName, recordValue } from "../../utils/record";
 
 export function DepartmentsPage() {
   const { token } = useAuth();
   const [departments, setDepartments] = useState<Department[]>([]);
+  const [message, setMessage] = useState("");
+  const [messageType, setMessageType] = useState<"error" | "success">("success");
   const [form, setForm] = useState({ name: "", description: "" });
   const [editingId, setEditingId] = useState<number | null>(null);
 
@@ -17,7 +21,11 @@ export function DepartmentsPage() {
     adminService
       .departments(token)
       .then((response) => setDepartments(response.departments))
-      .catch(() => setDepartments([]));
+      .catch((error) => {
+        setDepartments([]);
+        setMessageType("error");
+        setMessage(friendlyErrorMessage(error, "No se pudo cargar el listado de departamentos."));
+      });
   }, [token]);
 
   useEffect(() => {
@@ -27,22 +35,39 @@ export function DepartmentsPage() {
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
     if (!token) return;
+    setMessage("");
 
-    if (editingId) {
-      await adminService.updateDepartment(token, editingId, form);
-    } else {
-      await adminService.createDepartment(token, form);
+    try {
+      if (editingId) {
+        await adminService.updateDepartment(token, editingId, form);
+      } else {
+        await adminService.createDepartment(token, form);
+      }
+    } catch (error) {
+      setMessageType("error");
+      setMessage(friendlyErrorMessage(error, "No se pudo guardar el departamento."));
+      return;
     }
 
     setForm({ name: "", description: "" });
     setEditingId(null);
+    setMessageType("success");
+    setMessage(editingId ? "Departamento actualizado correctamente." : "Departamento creado correctamente.");
     reload();
   }
 
   async function toggleActive(id: number, isActive: boolean) {
     if (!token) return;
-    await adminService.setDepartmentActive(token, id, !isActive);
-    reload();
+    setMessage("");
+    try {
+      await adminService.setDepartmentActive(token, id, !isActive);
+      setMessageType("success");
+      setMessage(isActive ? "Departamento desactivado correctamente." : "Departamento activado correctamente.");
+      reload();
+    } catch (error) {
+      setMessageType("error");
+      setMessage(friendlyErrorMessage(error, "No se pudo cambiar el estado del departamento."));
+    }
   }
 
   return (
@@ -64,11 +89,15 @@ export function DepartmentsPage() {
           <button className="primary-button span-2" type="submit">
             <Plus size={18} /> {editingId ? "Guardar departamento" : "Crear departamento"}
           </button>
+          {message ? <p className={messageType === "error" ? "form-error span-2" : "form-success span-2"}>{message}</p> : null}
         </form>
 
         <div className="surface">
           <h2>Listado</h2>
-          <div className="data-table compact-table">
+          {departments.length === 0 ? (
+            <EmptyState title="No hay departamentos para mostrar" message="Cuando cree departamentos, apareceran en este listado." />
+          ) : (
+            <div className="data-table compact-table">
             <table>
               <thead>
                 <tr>
@@ -114,7 +143,8 @@ export function DepartmentsPage() {
                 })}
               </tbody>
             </table>
-          </div>
+            </div>
+          )}
         </div>
       </section>
     </>

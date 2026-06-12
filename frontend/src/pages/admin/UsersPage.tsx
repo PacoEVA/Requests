@@ -1,9 +1,11 @@
 import { KeyRound, Plus, UserRound } from "lucide-react";
 import { FormEvent, useCallback, useEffect, useState } from "react";
+import { EmptyState } from "../../components/common/EmptyState";
 import { PageHeader } from "../../components/common/PageHeader";
 import { useAuth } from "../../contexts/AuthContext";
 import { adminService } from "../../services/admin.service";
 import type { Department } from "../../types/employee.types";
+import { friendlyErrorMessage } from "../../utils/friendlyError";
 import { recordId, recordName, recordValue } from "../../utils/record";
 
 export function UsersPage() {
@@ -23,8 +25,20 @@ export function UsersPage() {
 
   const reload = useCallback(() => {
     if (!token) return;
-    adminService.users(token).then((response) => setUsers(response.users)).catch(() => setUsers([]));
-    adminService.departments(token).then((response) => setDepartments(response.departments)).catch(() => setDepartments([]));
+    adminService
+      .users(token)
+      .then((response) => setUsers(response.users))
+      .catch((error) => {
+        setUsers([]);
+        setErrorMessage(friendlyErrorMessage(error, "No se pudo cargar el listado de usuarios."));
+      });
+    adminService
+      .departments(token)
+      .then((response) => setDepartments(response.departments))
+      .catch((error) => {
+        setDepartments([]);
+        setErrorMessage(friendlyErrorMessage(error, "No se pudo cargar el listado de departamentos."));
+      });
   }, [token]);
 
   useEffect(() => {
@@ -72,14 +86,24 @@ export function UsersPage() {
 
   async function resetPassword(userId: number) {
     if (!token) return;
-    const response = await adminService.resetPassword(token, userId);
-    setTemporaryPassword(response.temporaryPassword);
+    setErrorMessage("");
+    try {
+      const response = await adminService.resetPassword(token, userId);
+      setTemporaryPassword(response.temporaryPassword);
+    } catch (error) {
+      setErrorMessage(friendlyErrorMessage(error, "No se pudo restablecer la contrasena."));
+    }
   }
 
   async function toggleActive(userId: number, isActive: boolean) {
     if (!token) return;
-    await adminService.setUserActive(token, userId, !isActive);
-    reload();
+    setErrorMessage("");
+    try {
+      await adminService.setUserActive(token, userId, !isActive);
+      reload();
+    } catch (error) {
+      setErrorMessage(friendlyErrorMessage(error, "No se pudo cambiar el estado del usuario."));
+    }
   }
 
   return (
@@ -149,7 +173,10 @@ export function UsersPage() {
 
         <div className="surface">
           <h2>Listado</h2>
-          <div className="data-table compact-table">
+          {users.length === 0 ? (
+            <EmptyState title="No hay usuarios internos" message="Cuando cree usuarios, apareceran en este listado." />
+          ) : (
+            <div className="data-table compact-table">
             <table>
               <thead>
                 <tr>
@@ -204,7 +231,8 @@ export function UsersPage() {
                 })}
               </tbody>
             </table>
-          </div>
+            </div>
+          )}
         </div>
       </section>
     </>

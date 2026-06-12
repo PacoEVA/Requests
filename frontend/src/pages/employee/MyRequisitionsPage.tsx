@@ -1,12 +1,14 @@
 import { Search } from "lucide-react";
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
+import { EmptyState } from "../../components/common/EmptyState";
 import { PageHeader } from "../../components/common/PageHeader";
 import { StatusBadge } from "../../components/common/StatusBadge";
 import { useEmployee } from "../../contexts/EmployeeContext";
 import { useSocket } from "../../contexts/SocketContext";
 import { requisitionService } from "../../services/requisition.service";
 import type { RequisitionSummary } from "../../types/requisition.types";
+import { friendlyErrorMessage } from "../../utils/friendlyError";
 import { recordValue } from "../../utils/record";
 
 const statusOptions = [
@@ -26,6 +28,7 @@ export function MyRequisitionsPage() {
   const { employeeToken } = useEmployee();
   const socket = useSocket();
   const [requisitions, setRequisitions] = useState<RequisitionSummary[]>([]);
+  const [loadError, setLoadError] = useState("");
   const [filters, setFilters] = useState({
     search: "",
     status: "",
@@ -46,7 +49,14 @@ export function MyRequisitionsPage() {
 
   const loadRequisitions = useCallback(() => {
     if (!employeeToken) return;
-    requisitionService.my(employeeToken, queryFilters).then((response) => setRequisitions(response.requisitions)).catch(() => setRequisitions([]));
+    setLoadError("");
+    requisitionService
+      .my(employeeToken, queryFilters)
+      .then((response) => setRequisitions(response.requisitions))
+      .catch((error) => {
+        setRequisitions([]);
+        setLoadError(friendlyErrorMessage(error, "No se pudieron cargar sus requisiciones."));
+      });
   }, [employeeToken, queryFilters]);
 
   useEffect(() => {
@@ -107,7 +117,15 @@ export function MyRequisitionsPage() {
           </button>
         </form>
 
-        <div className="data-table">
+        {loadError ? <p className="form-error">{loadError}</p> : null}
+
+        {requisitions.length === 0 ? (
+          <EmptyState
+            title={loadError ? "No pudimos mostrar sus requisiciones" : "No tiene requisiciones con estos filtros"}
+            message={loadError ? "Revise la conexion o intente nuevamente." : "Cuando cree una requisicion, aparecera en este listado."}
+          />
+        ) : (
+          <div className="data-table">
           <table>
             <thead>
               <tr>
@@ -137,7 +155,8 @@ export function MyRequisitionsPage() {
               })}
             </tbody>
           </table>
-        </div>
+          </div>
+        )}
       </section>
     </>
   );

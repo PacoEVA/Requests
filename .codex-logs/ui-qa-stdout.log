@@ -1,0 +1,27 @@
+
+> requests-platform@0.1.0 dev
+> concurrently -n backend,frontend -c blue,green "cross-env PORT=4100 npm run dev:backend" "cross-env VITE_API_URL=http://localhost:4100/api VITE_SOCKET_URL=http://localhost:4100 npm run dev:frontend"
+
+[frontend] 
+[frontend] > requests-platform@0.1.0 dev:frontend
+[frontend] > npm run dev --workspace frontend --
+[frontend] 
+[backend] 
+[backend] > requests-platform@0.1.0 dev:backend
+[backend] > npm run dev --workspace backend --
+[backend] 
+[frontend] 
+[frontend] > @requests/frontend@0.1.0 dev
+[frontend] > vite
+[frontend] 
+[backend] 
+[backend] > @requests/backend@0.1.0 dev
+[backend] > tsx watch src/server.ts
+[backend] 
+[frontend] [2m8:04:16 a.m.[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m Re-optimizing dependencies because vite config has changed
+[frontend] 
+[frontend]   [32m[1mVITE[22m v8.0.16[39m  [2mready in [0m[1m434[22m[2m[0m ms[22m
+[frontend] 
+[frontend]   [32m➜[39m  [1mLocal[22m:   [36mhttp://127.0.0.1:[1m5173[22m/[39m
+[frontend] [2m8:04:17 a.m.[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [optimizer] bundling dependencies...
+[backend] Requests API listening on http://localhost:4100
