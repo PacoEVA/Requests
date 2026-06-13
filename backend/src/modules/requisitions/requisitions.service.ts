@@ -500,16 +500,19 @@ export class RequisitionsService {
   }
 
   private async notifyRole(role: RoleName, requisitionId: number, title: string, message: string, type: string) {
-    const notification = await notificationsService.createForRole(role, {
+    const notifications = await notificationsService.createForRole(role, {
       requisitionId,
       title,
       message,
       type
     });
 
-    if (!notification) return;
+    if (!notifications.length) return;
     await safeEmit((io) => {
-      io.to(`role:${role}`).emit("notification:new", notification);
+      for (const notification of notifications) {
+        const internalUserId = Number(notification.InternalUserId ?? notification.internalUserId ?? 0);
+        if (internalUserId) io.to(`internalUser:${internalUserId}`).emit("notification:new", notification);
+      }
     });
   }
 

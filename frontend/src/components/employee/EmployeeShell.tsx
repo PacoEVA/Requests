@@ -1,5 +1,6 @@
 import { Bell, ClipboardList, FilePlus2, Home, UserRound } from "lucide-react";
 import { NavLink, Outlet } from "react-router-dom";
+import { NotificationBell } from "../common/NotificationBell";
 import { useEmployee } from "../../contexts/EmployeeContext";
 import { useRealtimeNotifications } from "../../contexts/RealtimeNotificationsContext";
 
@@ -34,6 +35,7 @@ export function EmployeeShell() {
             <UserRound size={18} /> Perfil
           </NavLink>
         </nav>
+        <NotificationBell scope="employee" />
         {permission === "default" ? (
           <button className="icon-text-button subtle" type="button" onClick={requestBrowserPermission}>
             <Bell size={18} /> Activar notificaciones

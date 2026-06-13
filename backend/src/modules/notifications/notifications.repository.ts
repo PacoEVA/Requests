@@ -11,6 +11,12 @@ export interface CreateNotificationInput {
   type: string;
 }
 
+export interface NotificationRecipient {
+  employeeId?: number;
+  internalUserId?: number;
+  roleName?: string;
+}
+
 export class NotificationsRepository {
   async create(input: CreateNotificationInput) {
     const pool = await getDbPool();
@@ -37,38 +43,73 @@ export class NotificationsRepository {
 
   async createForRole(roleName: "Admin" | "Compras" | "Supervisor", input: Omit<CreateNotificationInput, "recipientType" | "roleId">) {
     const pool = await getDbPool();
-    const roleResult = await pool
+    const usersResult = await pool
       .request()
       .input("RoleName", sql.NVarChar(50), roleName)
-      .query("SELECT TOP 1 Id FROM Roles WHERE Name = @RoleName");
+      .query(`
+        SELECT iu.Id AS InternalUserId
+        FROM InternalUsers iu
+        INNER JOIN Roles r ON r.Id = iu.RoleId
+        WHERE r.Name = @RoleName
+          AND iu.IsActive = 1
+      `);
 
-    const roleId = roleResult.recordset[0]?.Id;
-    if (!roleId) return null;
+    if (usersResult.recordset.length === 0) return [];
 
-    return this.create({
-      ...input,
-      recipientType: "ROLE",
-      roleId: Number(roleId)
-    });
+    return Promise.all(
+      usersResult.recordset.map((user) =>
+        this.create({
+          ...input,
+          recipientType: "INTERNAL_USER",
+          internalUserId: Number(user.InternalUserId)
+        })
+      )
+    );
   }
 
-  async markRead(notificationId: number, recipient: { employeeId?: number; internalUserId?: number }) {
+  async listUnread(recipient: NotificationRecipient) {
+    const pool = await getDbPool();
+    const result = await pool
+      .request()
+      .input("EmployeeId", sql.Int, recipient.employeeId ?? null)
+      .input("InternalUserId", sql.Int, recipient.internalUserId ?? null)
+      .input("RoleName", sql.NVarChar(50), recipient.roleName ?? null)
+      .query(`
+        SELECT TOP 50 n.*
+        FROM Notifications n
+        LEFT JOIN Roles r ON r.Id = n.RoleId
+        WHERE n.IsRead = 0
+          AND (
+            (@EmployeeId IS NOT NULL AND n.EmployeeId = @EmployeeId)
+            OR (@InternalUserId IS NOT NULL AND n.InternalUserId = @InternalUserId)
+            OR (@RoleName IS NOT NULL AND n.RecipientType = 'ROLE' AND r.Name = @RoleName)
+          )
+        ORDER BY n.CreatedAt DESC
+      `);
+
+    return result.recordset;
+  }
+
+  async markRead(notificationId: number, recipient: NotificationRecipient) {
     const pool = await getDbPool();
     const result = await pool
       .request()
       .input("Id", sql.Int, notificationId)
       .input("EmployeeId", sql.Int, recipient.employeeId ?? null)
       .input("InternalUserId", sql.Int, recipient.internalUserId ?? null)
+      .input("RoleName", sql.NVarChar(50), recipient.roleName ?? null)
       .query(`
-        UPDATE Notifications
+        UPDATE n
         SET IsRead = 1,
             ReadAt = SYSUTCDATETIME()
         OUTPUT INSERTED.*
-        WHERE Id = @Id
+        FROM Notifications n
+        LEFT JOIN Roles r ON r.Id = n.RoleId
+        WHERE n.Id = @Id
           AND (
-            (@EmployeeId IS NOT NULL AND EmployeeId = @EmployeeId)
-            OR (@InternalUserId IS NOT NULL AND InternalUserId = @InternalUserId)
-            OR RecipientType = 'ROLE'
+            (@EmployeeId IS NOT NULL AND n.EmployeeId = @EmployeeId)
+            OR (@InternalUserId IS NOT NULL AND n.InternalUserId = @InternalUserId)
+            OR (@RoleName IS NOT NULL AND n.RecipientType = 'ROLE' AND r.Name = @RoleName)
           )
       `);
 

@@ -10,6 +10,7 @@ import {
   Workflow
 } from "lucide-react";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
+import { NotificationBell } from "../common/NotificationBell";
 import { useAuth } from "../../contexts/AuthContext";
 import { useRealtimeNotifications } from "../../contexts/RealtimeNotificationsContext";
 
@@ -63,6 +64,7 @@ export function AdminShell() {
             <BarChart3 size={18} /> Estadísticas
           </NavLink>
         </nav>
+        <NotificationBell scope="admin" />
         {permission === "default" ? (
           <button className="icon-text-button subtle" type="button" onClick={requestBrowserPermission}>
             <Bell size={18} /> Activar notificaciones

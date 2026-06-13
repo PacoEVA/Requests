@@ -10,6 +10,7 @@ import { dashboardRouter } from "./modules/dashboard/dashboard.routes";
 import { adminDepartmentsRouter, departmentsRouter } from "./modules/departments/departments.routes";
 import { employeesRouter } from "./modules/employees/employees.routes";
 import { adminMaterialsRouter, materialsRouter } from "./modules/materials/materials.routes";
+import { notificationsRouter } from "./modules/notifications/notifications.routes";
 import { adminRequisitionsRouter, requisitionsRouter } from "./modules/requisitions/requisitions.routes";
 import { usersRouter } from "./modules/users/users.routes";
 
@@ -49,6 +50,7 @@ export function createApp() {
   app.use("/api/admin/requisitions", adminRequisitionsRouter);
   app.use("/api/materials", materialsRouter);
   app.use("/api/admin/materials", adminMaterialsRouter);
+  app.use("/api/notifications", notificationsRouter);
   app.use("/api/departments", departmentsRouter);
   app.use("/api/admin/departments", adminDepartmentsRouter);
   app.use("/api/admin/dashboard", dashboardRouter);

@@ -1,4 +1,4 @@
-import { notificationsRepository, type CreateNotificationInput } from "./notifications.repository";
+import { notificationsRepository, type CreateNotificationInput, type NotificationRecipient } from "./notifications.repository";
 
 export class NotificationsService {
   create(input: CreateNotificationInput) {
@@ -9,7 +9,11 @@ export class NotificationsService {
     return notificationsRepository.createForRole(roleName, input);
   }
 
-  markRead(notificationId: number, recipient: { employeeId?: number; internalUserId?: number }) {
+  listUnread(recipient: NotificationRecipient) {
+    return notificationsRepository.listUnread(recipient);
+  }
+
+  markRead(notificationId: number, recipient: NotificationRecipient) {
     return notificationsRepository.markRead(notificationId, recipient);
   }
 }

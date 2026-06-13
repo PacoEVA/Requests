@@ -127,7 +127,8 @@ export function configureSockets(httpServer: HttpServer) {
         if (!notificationId) throw new Error("notificationId requerido");
         const notification = await notificationsService.markRead(notificationId, {
           employeeId: socket.data.employee?.id,
-          internalUserId: socket.data.user?.id
+          internalUserId: socket.data.user?.id,
+          roleName: socket.data.user?.role
         });
 
         if (notification) socket.emit("notification:read", { notificationId });
