@@ -10,6 +10,7 @@ export interface InternalUserInput {
 }
 
 export class UsersRepository {
+  /** Consulta usuarios internos con rol y departamento asociado. */
   async list() {
     const pool = await getDbPool();
     const result = await pool.query(`
@@ -32,6 +33,7 @@ export class UsersRepository {
     return result.recordset;
   }
 
+  /** Inserta un usuario interno con hash de contrasena y cambio obligatorio. */
   async create(input: Required<Pick<InternalUserInput, "password">> & InternalUserInput, passwordHash: string) {
     const pool = await getDbPool();
     const result = await pool
@@ -53,6 +55,7 @@ export class UsersRepository {
     return result.recordset[0];
   }
 
+  /** Actualiza nombre, rol y departamento de un usuario interno. */
   async update(id: number, input: Omit<InternalUserInput, "password">) {
     const pool = await getDbPool();
     const result = await pool
@@ -79,6 +82,7 @@ export class UsersRepository {
     return result.recordset[0];
   }
 
+  /** Marca un usuario interno como activo o inactivo. */
   async setActive(id: number, isActive: boolean) {
     const pool = await getDbPool();
     await pool
@@ -88,6 +92,7 @@ export class UsersRepository {
       .query("UPDATE InternalUsers SET IsActive = @IsActive, UpdatedAt = SYSUTCDATETIME() WHERE Id = @Id");
   }
 
+  /** Guarda un hash temporal y fuerza cambio de contrasena en el proximo acceso. */
   async resetPassword(id: number, passwordHash: string) {
     const pool = await getDbPool();
     await pool

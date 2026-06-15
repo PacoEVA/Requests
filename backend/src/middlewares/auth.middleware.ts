@@ -4,6 +4,7 @@ import { env } from "../config/env";
 import type { AuthenticatedUser, RoleName } from "../modules/auth/auth.types";
 import { AppError } from "./error.middleware";
 
+/** Valida el JWT de usuarios internos y lo adjunta a req.user. */
 export const authenticateInternal: RequestHandler = (req, _res, next) => {
   const header = req.headers.authorization;
   const token = header?.startsWith("Bearer ") ? header.slice("Bearer ".length) : null;
@@ -21,6 +22,7 @@ export const authenticateInternal: RequestHandler = (req, _res, next) => {
   }
 };
 
+/** Restringe una ruta a usuarios internos con alguno de los roles indicados. */
 export function requireRole(...roles: RoleName[]): RequestHandler {
   return (req, _res, next) => {
     if (!req.user) {

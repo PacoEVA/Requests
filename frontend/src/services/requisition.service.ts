@@ -7,6 +7,7 @@ import type {
 
 type RequisitionFilters = Record<string, string | number | undefined | null>;
 
+/** Construye URLs filtradas omitiendo valores vacios. */
 function withQuery(path: string, filters?: RequisitionFilters) {
   if (!filters) return path;
 
@@ -22,6 +23,7 @@ function withQuery(path: string, filters?: RequisitionFilters) {
 }
 
 export const requisitionService = {
+  /** Crea una requisicion desde empleado. */
   create(employeeToken: string, payload: CreateRequisitionPayload) {
     return apiRequest<{ requisition: RequisitionDetail }>("/requisitions", {
       method: "POST",
@@ -29,12 +31,15 @@ export const requisitionService = {
       body: JSON.stringify(payload)
     });
   },
+  /** Lista requisiciones propias del empleado. */
   my(employeeToken: string, filters?: RequisitionFilters) {
     return apiRequest<{ requisitions: RequisitionSummary[] }>(withQuery("/requisitions/my", filters), { employeeToken });
   },
+  /** Obtiene detalle de requisicion propia. */
   myDetail(employeeToken: string, id: string) {
     return apiRequest<{ requisition: RequisitionDetail }>(`/requisitions/my/${id}`, { employeeToken });
   },
+  /** Cancela una requisicion propia con motivo. */
   cancelMine(employeeToken: string, id: string, reason: string) {
     return apiRequest<{ ok: boolean; requisition: RequisitionDetail }>(`/requisitions/my/${id}/cancel`, {
       method: "PATCH",
@@ -42,12 +47,15 @@ export const requisitionService = {
       body: JSON.stringify({ reason })
     });
   },
+  /** Lista requisiciones para administracion. */
   adminList(token: string, filters?: RequisitionFilters) {
     return apiRequest<{ requisitions: RequisitionSummary[] }>(withQuery("/admin/requisitions", filters), { token });
   },
+  /** Obtiene detalle administrativo de requisicion. */
   adminDetail(token: string, id: string) {
     return apiRequest<{ requisition: RequisitionDetail }>(`/admin/requisitions/${id}`, { token });
   },
+  /** Cambia estado y cantidades aprobadas desde administracion. */
   updateStatus(
     token: string,
     id: string,
@@ -61,6 +69,7 @@ export const requisitionService = {
       body: JSON.stringify({ statusCode, reason, items })
     });
   },
+  /** Asigna responsable interno a una requisicion. */
   assign(token: string, id: string, assignedToUserId: number) {
     return apiRequest<{ ok: boolean; requisition: RequisitionDetail }>(`/admin/requisitions/${id}/assign`, {
       method: "PATCH",
@@ -68,6 +77,7 @@ export const requisitionService = {
       body: JSON.stringify({ assignedToUserId })
     });
   },
+  /** Registra entregas parciales o totales. */
   deliver(
     token: string,
     id: string,
@@ -79,9 +89,11 @@ export const requisitionService = {
       body: JSON.stringify(payload)
     });
   },
+  /** Lista comentarios de una requisicion para cualquier identidad valida. */
   comments(credentials: { token?: string | null; employeeToken?: string | null }, id: string) {
     return apiRequest<{ comments: unknown[] }>(`/requisitions/${id}/comments`, credentials);
   },
+  /** Agrega comentario usando token interno o token de empleado. */
   addComment(credentials: { token?: string | null; employeeToken?: string | null }, id: string, message: string) {
     return apiRequest<{ comment: unknown }>(`/requisitions/${id}/comments`, {
       ...credentials,

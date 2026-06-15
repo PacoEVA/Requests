@@ -8,6 +8,7 @@ export interface MaterialInput {
 }
 
 export class MaterialsRepository {
+  /** Consulta materiales activos solicitables, filtrando por texto si aplica. */
   async listPublic(search?: string) {
     const pool = await getDbPool();
     const result = await pool
@@ -25,6 +26,7 @@ export class MaterialsRepository {
     return result.recordset;
   }
 
+  /** Consulta todo el catalogo de materiales para administradores. */
   async listAdmin(search?: string) {
     const pool = await getDbPool();
     const result = await pool
@@ -40,6 +42,7 @@ export class MaterialsRepository {
     return result.recordset;
   }
 
+  /** Inserta un material y devuelve el registro creado. */
   async create(input: MaterialInput) {
     const pool = await getDbPool();
     const result = await pool
@@ -57,6 +60,7 @@ export class MaterialsRepository {
     return result.recordset[0];
   }
 
+  /** Actualiza un material por id y devuelve el registro actualizado. */
   async update(id: number, input: MaterialInput) {
     const pool = await getDbPool();
     const result = await pool
@@ -80,6 +84,7 @@ export class MaterialsRepository {
     return result.recordset[0];
   }
 
+  /** Marca un material como activo o inactivo. */
   async setActive(id: number, isActive: boolean) {
     const pool = await getDbPool();
     await pool

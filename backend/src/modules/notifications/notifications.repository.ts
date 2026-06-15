@@ -18,6 +18,7 @@ export interface NotificationRecipient {
 }
 
 export class NotificationsRepository {
+  /** Inserta una notificacion para un destinatario especifico. */
   async create(input: CreateNotificationInput) {
     const pool = await getDbPool();
     const result = await pool
@@ -41,6 +42,7 @@ export class NotificationsRepository {
     return result.recordset[0];
   }
 
+  /** Crea una notificacion individual para cada usuario activo de un rol. */
   async createForRole(roleName: "Admin" | "Compras" | "Supervisor", input: Omit<CreateNotificationInput, "recipientType" | "roleId">) {
     const pool = await getDbPool();
     const usersResult = await pool
@@ -67,6 +69,7 @@ export class NotificationsRepository {
     );
   }
 
+  /** Lista las ultimas notificaciones sin leer visibles para un destinatario. */
   async listUnread(recipient: NotificationRecipient) {
     const pool = await getDbPool();
     const result = await pool
@@ -90,6 +93,7 @@ export class NotificationsRepository {
     return result.recordset;
   }
 
+  /** Marca como leida una notificacion solo si pertenece al destinatario actual. */
   async markRead(notificationId: number, recipient: NotificationRecipient) {
     const pool = await getDbPool();
     const result = await pool

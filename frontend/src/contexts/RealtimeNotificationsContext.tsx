@@ -32,14 +32,17 @@ interface RealtimeNotificationsValue {
 
 const RealtimeNotificationsContext = createContext<RealtimeNotificationsValue | null>(null);
 
+/** Indica si el navegador soporta la API nativa de notificaciones. */
 function notificationSupported() {
   return typeof window !== "undefined" && "Notification" in window;
 }
 
+/** Lee el permiso actual del navegador o devuelve unsupported si no existe la API. */
 function readPermission(): NotificationPermission | "unsupported" {
   return notificationSupported() ? Notification.permission : "unsupported";
 }
 
+/** Extrae texto de payloads que pueden venir con llaves camelCase o PascalCase. */
 function payloadText(payload: unknown, key: string, fallback = "") {
   if (!payload || typeof payload !== "object") return fallback;
   const record = payload as Record<string, unknown>;
@@ -47,6 +50,7 @@ function payloadText(payload: unknown, key: string, fallback = "") {
   return typeof value === "string" && value.trim() ? value : fallback;
 }
 
+/** Extrae numeros positivos desde payloads de API o socket. */
 function payloadNumber(payload: unknown, key: string) {
   if (!payload || typeof payload !== "object") return null;
   const record = payload as Record<string, unknown>;
@@ -55,6 +59,7 @@ function payloadNumber(payload: unknown, key: string) {
   return Number.isFinite(numberValue) && numberValue > 0 ? numberValue : null;
 }
 
+/** Convierte cualquier payload entrante al formato unico usado por la campana. */
 function normalizeNotification(payload: NotificationRecord | unknown): AppNotification | null {
   const id = payloadNumber(payload, "id");
   if (!id) return null;
@@ -69,6 +74,7 @@ function normalizeNotification(payload: NotificationRecord | unknown): AppNotifi
   };
 }
 
+/** Obtiene el id de requisicion cuando la ruta actual apunta al detalle. */
 function activeRequisitionId(pathname: string) {
   const match = pathname.match(/\/requisitions\/(\d+)/);
   if (!match) return null;
@@ -76,11 +82,13 @@ function activeRequisitionId(pathname: string) {
   return Number.isFinite(id) ? id : null;
 }
 
+/** Agrega una notificacion al inicio sin duplicarla y conserva solo las ultimas 50. */
 function addUnread(current: AppNotification[], notification: AppNotification) {
   if (current.some((item) => item.id === notification.id)) return current;
   return [notification, ...current].slice(0, 50);
 }
 
+/** Provee toasts en tiempo real, contador de no leidas y acciones de lectura. */
 export function RealtimeNotificationsProvider({ children }: { children: ReactNode }) {
   const socket = useSocket();
   const location = useLocation();
@@ -96,10 +104,12 @@ export function RealtimeNotificationsProvider({ children }: { children: ReactNod
   }, [employeeToken, location.pathname, token]);
   const hasCredentials = Boolean(credentials.token || credentials.employeeToken);
 
+  /** Quita un toast temporal de la pila visible. */
   const removeNotice = useCallback((id: number) => {
     setNotices((current) => current.filter((notice) => notice.id !== id));
   }, []);
 
+  /** Muestra el toast dentro de la app y, si hay permiso, tambien en el navegador. */
   const pushNotice = useCallback(
     (title: string, message: string) => {
       const id = Date.now() + Math.floor(Math.random() * 1000);
@@ -117,6 +127,7 @@ export function RealtimeNotificationsProvider({ children }: { children: ReactNod
     [removeNotice]
   );
 
+  /** Solicita permiso al navegador para enviar notificaciones del sistema. */
   const requestBrowserPermission = useCallback(async () => {
     if (!notificationSupported()) {
       setPermission("unsupported");
@@ -131,6 +142,7 @@ export function RealtimeNotificationsProvider({ children }: { children: ReactNod
     }
   }, [pushNotice]);
 
+  /** Marca una notificacion como leida localmente y la sincroniza con socket/API. */
   const markAsRead = useCallback(
     (notificationId: number) => {
       setUnreadNotifications((current) => current.filter((notification) => notification.id !== notificationId));
@@ -145,10 +157,12 @@ export function RealtimeNotificationsProvider({ children }: { children: ReactNod
     [credentials, hasCredentials, socket]
   );
 
+  /** Marca como leidas todas las notificaciones que actualmente ve la campana. */
   const markAllAsRead = useCallback(() => {
     unreadNotifications.forEach((notification) => markAsRead(notification.id));
   }, [markAsRead, unreadNotifications]);
 
+  /** Carga las no leidas guardadas al entrar o al cambiar de identidad. */
   useEffect(() => {
     if (!hasCredentials) {
       setUnreadNotifications([]);
@@ -171,9 +185,11 @@ export function RealtimeNotificationsProvider({ children }: { children: ReactNod
     };
   }, [credentials, hasCredentials]);
 
+  /** Escucha eventos realtime y decide si suman al contador o se leen al instante. */
   useEffect(() => {
     if (!socket) return;
 
+    /** Procesa una notificacion nueva recibida por socket. */
     const onNotification = (payload: unknown) => {
       const title = payloadText(payload, "title", "Nueva notificacion");
       const message = payloadText(payload, "message", "Hay una actualizacion en Requests.");
@@ -194,6 +210,7 @@ export function RealtimeNotificationsProvider({ children }: { children: ReactNod
       setUnreadNotifications((current) => addUnread(current, notification));
     };
 
+    /** Sincroniza lecturas confirmadas por socket con el estado local. */
     const onNotificationRead = ({ notificationId }: { notificationId?: number }) => {
       if (!notificationId) return;
       setUnreadNotifications((current) => current.filter((notification) => notification.id !== notificationId));
@@ -241,6 +258,7 @@ export function RealtimeNotificationsProvider({ children }: { children: ReactNod
   );
 }
 
+/** Hook de acceso al estado compartido de notificaciones realtime. */
 export function useRealtimeNotifications() {
   const context = useContext(RealtimeNotificationsContext);
   if (!context) {

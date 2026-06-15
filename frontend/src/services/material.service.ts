@@ -9,12 +9,15 @@ export interface MaterialPayload {
 }
 
 export const materialService = {
+  /** Lista materiales activos y solicitables. */
   publicList() {
     return apiRequest<{ materials: Material[] }>("/materials");
   },
+  /** Lista catalogo completo para administracion. */
   adminList(token: string) {
     return apiRequest<{ materials: Material[] }>("/admin/materials", { token });
   },
+  /** Crea un material de catalogo. */
   create(token: string, payload: MaterialPayload) {
     return apiRequest<{ material: Material }>("/admin/materials", {
       method: "POST",
@@ -22,6 +25,7 @@ export const materialService = {
       body: JSON.stringify(payload)
     });
   },
+  /** Actualiza un material de catalogo. */
   update(token: string, id: number, payload: MaterialPayload) {
     return apiRequest<{ material: Material }>(`/admin/materials/${id}`, {
       method: "PUT",
@@ -29,6 +33,7 @@ export const materialService = {
       body: JSON.stringify(payload)
     });
   },
+  /** Activa o desactiva un material. */
   setActive(token: string, id: number, isActive: boolean) {
     return apiRequest<{ ok: boolean }>(`/admin/materials/${id}/${isActive ? "activate" : "deactivate"}`, {
       method: "PATCH",

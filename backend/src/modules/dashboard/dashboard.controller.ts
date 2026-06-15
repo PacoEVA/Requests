@@ -3,6 +3,7 @@ import { AppError } from "../../middlewares/error.middleware";
 import { dashboardService } from "./dashboard.service";
 
 export class DashboardController {
+  /** Devuelve conteos resumidos de requisiciones visibles para el usuario. */
   summary: RequestHandler = async (req, res, next) => {
     try {
       if (!req.user) throw new AppError("Usuario no autenticado", 401, "AUTH_REQUIRED");
@@ -12,6 +13,7 @@ export class DashboardController {
     }
   };
 
+  /** Devuelve las requisiciones recientes que el usuario puede ver. */
   recentRequisitions: RequestHandler = async (req, res, next) => {
     try {
       if (!req.user) throw new AppError("Usuario no autenticado", 401, "AUTH_REQUIRED");
@@ -21,6 +23,7 @@ export class DashboardController {
     }
   };
 
+  /** Devuelve rankings, tendencias y metricas filtradas para reportes. */
   statistics: RequestHandler = async (req, res, next) => {
     try {
       if (!req.user) throw new AppError("Usuario no autenticado", 401, "AUTH_REQUIRED");

@@ -1,3 +1,4 @@
+/** Renderiza una etiqueta de estado con clase CSS derivada del texto. */
 export function StatusBadge({ status }: { status?: string }) {
   const normalized =
     status

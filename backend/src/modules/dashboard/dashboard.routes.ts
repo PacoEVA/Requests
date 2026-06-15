@@ -4,6 +4,7 @@ import { dashboardController } from "./dashboard.controller";
 
 export const dashboardRouter = Router();
 
+// Todo dashboard requiere usuario interno autenticado.
 dashboardRouter.use(authenticateInternal);
 dashboardRouter.get("/summary", dashboardController.summary);
 dashboardRouter.get("/recent-requisitions", dashboardController.recentRequisitions);

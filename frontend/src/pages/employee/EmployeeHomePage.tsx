@@ -8,6 +8,7 @@ import { requisitionService } from "../../services/requisition.service";
 import type { RequisitionSummary } from "../../types/requisition.types";
 import { recordValue } from "../../utils/record";
 
+/** Pantalla inicial del empleado con accesos rapidos a sus flujos principales. */
 export function EmployeeHomePage() {
   const { employee, employeeToken } = useEmployee();
   const [recent, setRecent] = useState<RequisitionSummary[]>([]);

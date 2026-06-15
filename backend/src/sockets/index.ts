@@ -9,6 +9,7 @@ import { requisitionsRepository } from "../modules/requisitions/requisitions.rep
 import type { AuthenticatedUser } from "../modules/auth/auth.types";
 import { setSocketServer } from "./socket-hub";
 
+/** Inicializa Socket.IO, autentica salas de empleado/admin y registra eventos realtime. */
 export function configureSockets(httpServer: HttpServer) {
   const io = new Server(httpServer, {
     cors: {
@@ -122,6 +123,7 @@ export function configureSockets(httpServer: HttpServer) {
       if (requisitionId) socket.leave(`requisition:${requisitionId}`);
     });
 
+    // Confirma lecturas enviadas desde la campana o desde la auto-lectura del detalle.
     socket.on("notification:read", async ({ notificationId }: { notificationId?: number }) => {
       try {
         if (!notificationId) throw new Error("notificationId requerido");

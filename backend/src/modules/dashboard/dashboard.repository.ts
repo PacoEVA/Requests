@@ -8,6 +8,7 @@ export interface DashboardStatisticFilters {
   priority?: string;
 }
 
+/** Convierte filtros de fecha opcionales a Date, con soporte de fin de dia. */
 function nullableDate(value: unknown, endOfDay = false) {
   const text = typeof value === "string" ? value.trim() : "";
   if (!text) return null;
@@ -22,17 +23,20 @@ function nullableDate(value: unknown, endOfDay = false) {
   return date;
 }
 
+/** Convierte filtros numericos opcionales a enteros positivos o null. */
 function nullableNumber(value: unknown) {
   const numberValue = Number(value);
   return Number.isFinite(numberValue) && numberValue > 0 ? numberValue : null;
 }
 
+/** Limpia filtros de texto y retorna null si vienen vacios. */
 function nullableText(value: unknown) {
   const text = typeof value === "string" ? value.trim() : "";
   return text || null;
 }
 
 export class DashboardRepository {
+  /** Calcula conteos por estado y urgencias, opcionalmente por departamento. */
   async summary(departmentId?: number) {
     const pool = await getDbPool();
     const result = await pool.request().input("DepartmentId", sql.Int, departmentId ?? null).query(`
@@ -65,6 +69,7 @@ export class DashboardRepository {
     };
   }
 
+  /** Obtiene las ultimas requisiciones creadas para el dashboard. */
   async recentRequisitions(departmentId?: number) {
     const pool = await getDbPool();
     const result = await pool.request().input("DepartmentId", sql.Int, departmentId ?? null).query(`
@@ -87,6 +92,7 @@ export class DashboardRepository {
     return result.recordset;
   }
 
+  /** Ejecuta las consultas de estadisticas agregadas usadas por reportes. */
   async statistics(filters: DashboardStatisticFilters = {}) {
     const pool = await getDbPool();
     const request = pool

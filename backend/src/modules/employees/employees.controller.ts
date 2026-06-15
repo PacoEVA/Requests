@@ -3,6 +3,7 @@ import { AppError } from "../../middlewares/error.middleware";
 import { employeesService } from "./employees.service";
 
 export class EmployeesController {
+  /** Identifica o crea una sesion de empleado y devuelve su token publico. */
   identify: RequestHandler = async (req, res, next) => {
     try {
       const employee = await employeesService.identify(req.body);
@@ -12,6 +13,7 @@ export class EmployeesController {
     }
   };
 
+  /** Devuelve el empleado autenticado por x-employee-token. */
   me: RequestHandler = (req, res, next) => {
     if (!req.employee) {
       next(new AppError("Empleado no identificado", 401, "EMPLOYEE_REQUIRED"));
@@ -21,6 +23,7 @@ export class EmployeesController {
     res.json({ employee: req.employee });
   };
 
+  /** Actualiza los datos editables del empleado autenticado. */
   updateMe: RequestHandler = async (req, res, next) => {
     try {
       const token = req.header("x-employee-token");

@@ -7,6 +7,7 @@ const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || window.location.origin;
 
 const SocketContext = createContext<Socket | null>(null);
 
+/** Crea y mantiene la conexion Socket.IO segun exista sesion admin o empleado. */
 export function SocketProvider({ children }: { children: ReactNode }) {
   const { token } = useAuth();
   const { employeeToken } = useEmployee();
@@ -63,6 +64,7 @@ export function SocketProvider({ children }: { children: ReactNode }) {
   return <SocketContext.Provider value={socket}>{children}</SocketContext.Provider>;
 }
 
+/** Devuelve el socket compartido, o null si aun no esta disponible. */
 export function useSocket() {
   return useContext(SocketContext);
 }

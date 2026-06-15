@@ -7,6 +7,7 @@ import { employeeService } from "../../services/employee.service";
 import type { Department } from "../../types/employee.types";
 import { recordId, recordName } from "../../utils/record";
 
+/** Permite al empleado revisar y actualizar sus datos de perfil. */
 export function EmployeeProfilePage() {
   const navigate = useNavigate();
   const { employee, updateProfile, resetIdentity } = useEmployee();

@@ -6,6 +6,7 @@ import { employeeService } from "../../services/employee.service";
 import type { Department } from "../../types/employee.types";
 import { recordId, recordName } from "../../utils/record";
 
+/** Identifica al empleado y guarda su token publico local. */
 export function EmployeeIdentifyPage() {
   const navigate = useNavigate();
   const { identify } = useEmployee();

@@ -2,6 +2,7 @@ import type { RequestHandler } from "express";
 import { AppError } from "../../middlewares/error.middleware";
 import { requisitionsService } from "./requisitions.service";
 
+/** Valida y convierte parametros id de requisicion. */
 function numericId(value: string | undefined) {
   const id = Number(value);
   if (!Number.isInteger(id) || id <= 0) throw new AppError("Id inválido", 400, "INVALID_ID");
@@ -9,6 +10,7 @@ function numericId(value: string | undefined) {
 }
 
 export class RequisitionsController {
+  /** Crea una requisicion desde la identidad del empleado. */
   create: RequestHandler = async (req, res, next) => {
     try {
       if (!req.employee) throw new AppError("Empleado no identificado", 401, "EMPLOYEE_REQUIRED");
@@ -19,6 +21,7 @@ export class RequisitionsController {
     }
   };
 
+  /** Lista requisiciones propias del empleado autenticado. */
   listMine: RequestHandler = async (req, res, next) => {
     try {
       if (!req.employee) throw new AppError("Empleado no identificado", 401, "EMPLOYEE_REQUIRED");
@@ -29,6 +32,7 @@ export class RequisitionsController {
     }
   };
 
+  /** Devuelve el detalle de una requisicion del empleado autenticado. */
   getMine: RequestHandler = async (req, res, next) => {
     try {
       if (!req.employee) throw new AppError("Empleado no identificado", 401, "EMPLOYEE_REQUIRED");
@@ -39,6 +43,7 @@ export class RequisitionsController {
     }
   };
 
+  /** Cancela una requisicion propia indicando motivo. */
   cancelMine: RequestHandler = async (req, res, next) => {
     try {
       if (!req.employee) throw new AppError("Empleado no identificado", 401, "EMPLOYEE_REQUIRED");
@@ -49,6 +54,7 @@ export class RequisitionsController {
     }
   };
 
+  /** Lista requisiciones visibles para el usuario interno. */
   listAdmin: RequestHandler = async (req, res, next) => {
     try {
       if (!req.user) throw new AppError("Usuario no autenticado", 401, "AUTH_REQUIRED");
@@ -59,6 +65,7 @@ export class RequisitionsController {
     }
   };
 
+  /** Devuelve detalle de requisicion para administracion. */
   getAdmin: RequestHandler = async (req, res, next) => {
     try {
       if (!req.user) throw new AppError("Usuario no autenticado", 401, "AUTH_REQUIRED");
@@ -69,6 +76,7 @@ export class RequisitionsController {
     }
   };
 
+  /** Cambia estado y cantidades aprobadas segun reglas de negocio. */
   updateStatus: RequestHandler = async (req, res, next) => {
     try {
       if (!req.user) throw new AppError("Usuario no autenticado", 401, "AUTH_REQUIRED");
@@ -79,6 +87,7 @@ export class RequisitionsController {
     }
   };
 
+  /** Asigna una requisicion a un usuario interno responsable. */
   assign: RequestHandler = async (req, res, next) => {
     try {
       if (!req.user) throw new AppError("Usuario no autenticado", 401, "AUTH_REQUIRED");
@@ -89,6 +98,7 @@ export class RequisitionsController {
     }
   };
 
+  /** Registra entregas parciales o totales de lineas aprobadas. */
   deliver: RequestHandler = async (req, res, next) => {
     try {
       if (!req.user) throw new AppError("Usuario no autenticado", 401, "AUTH_REQUIRED");
@@ -99,6 +109,7 @@ export class RequisitionsController {
     }
   };
 
+  /** Lista comentarios de una requisicion para empleado o usuario interno. */
   listComments: RequestHandler = async (req, res, next) => {
     try {
       const requisitionId = numericId(req.params.id);
@@ -115,6 +126,7 @@ export class RequisitionsController {
     }
   };
 
+  /** Agrega comentario como empleado o usuario interno. */
   addComment: RequestHandler = async (req, res, next) => {
     try {
       const requisitionId = numericId(req.params.id);

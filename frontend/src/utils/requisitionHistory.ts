@@ -24,10 +24,12 @@ const actionLabels: Record<string, string> = {
   ASSIGNED: "Responsable asignado"
 };
 
+/** Traduce codigos tecnicos de estado a etiquetas legibles. */
 export function humanizeStatusCode(code: string) {
   return statusLabels[code] ?? code;
 }
 
+/** Calcula el titulo visible de una entrada de historial. */
 export function humanizeHistoryTitle(entry: Record<string, unknown>) {
   const statusName = recordValue<string>(entry, "newStatusName", "NewStatusName", "");
   if (statusName) return statusName;
@@ -36,6 +38,7 @@ export function humanizeHistoryTitle(entry: Record<string, unknown>) {
   return actionLabels[action] ?? "Actualizacion";
 }
 
+/** Limpia notas tecnicas del historial y las vuelve comprensibles. */
 export function humanizeHistoryNotes(entry: Record<string, unknown>) {
   const notes = recordValue<string>(entry, "notes", "Notes", "");
   const technicalStatusMatch = notes.match(/^Estado cambiado a ([A-Z_]+)$/);

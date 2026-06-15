@@ -14,6 +14,7 @@ import { NotificationBell } from "../common/NotificationBell";
 import { useAuth } from "../../contexts/AuthContext";
 import { useRealtimeNotifications } from "../../contexts/RealtimeNotificationsContext";
 
+/** Layout lateral de administracion con navegacion segun rol y logout. */
 export function AdminShell() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
@@ -64,6 +65,7 @@ export function AdminShell() {
             <BarChart3 size={18} /> Estadísticas
           </NavLink>
         </nav>
+        {/* Campana global: muestra acciones y mensajes pendientes para usuarios internos. */}
         <NotificationBell scope="admin" />
         {permission === "default" ? (
           <button className="icon-text-button subtle" type="button" onClick={requestBrowserPermission}>

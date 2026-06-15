@@ -33,10 +33,12 @@ const allowedTransitions: Record<string, string[]> = {
   PARTIALLY_DELIVERED: ["IN_PURCHASE"],
 };
 
+/** Normaliza valores desconocidos a arreglos de registros. */
 function asRecords(value: unknown) {
   return Array.isArray(value) ? (value as Array<Record<string, unknown>>) : [];
 }
 
+/** Lee texto de registros camelCase/PascalCase con fallback. */
 function text(
   record: Record<string, unknown>,
   camelKey: string,
@@ -46,6 +48,7 @@ function text(
   return recordValue<string>(record, camelKey, pascalKey, fallback) || fallback;
 }
 
+/** Formatea cantidades del detalle administrativo. */
 function numberText(
   record: Record<string, unknown>,
   camelKey: string,
@@ -62,12 +65,14 @@ function numberText(
     : Number(value).toLocaleString();
 }
 
+/** Formatea fechas del detalle administrativo. */
 function dateText(value: unknown) {
   if (!value) return "-";
   const date = new Date(String(value));
   return Number.isNaN(date.getTime()) ? String(value) : date.toLocaleString();
 }
 
+/** Gestiona detalle administrativo, estado, asignacion, entregas y comentarios. */
 export function RequisitionDetailPage() {
   const { id = "" } = useParams();
   const { token } = useAuth();
@@ -92,6 +97,7 @@ export function RequisitionDetailPage() {
   const [notice, setNotice] = useState("");
   const [error, setError] = useState("");
 
+  /** Recarga detalle de requisicion y comentarios. */
   const loadDetail = useCallback(() => {
     if (!token || !id) {
       setIsLoading(false);
@@ -214,6 +220,7 @@ export function RequisitionDetailPage() {
     );
   }
 
+  /** Envia cambio de estado y cantidades aprobadas cuando aplica. */
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
     setError("");
@@ -257,6 +264,7 @@ export function RequisitionDetailPage() {
     }
   }
 
+  /** Asigna la requisicion al usuario interno seleccionado. */
   async function assignResponsible(event: FormEvent) {
     event.preventDefault();
     setError("");
@@ -277,6 +285,7 @@ export function RequisitionDetailPage() {
     }
   }
 
+  /** Registra cantidades entregadas por linea. */
   async function deliver(event: FormEvent) {
     event.preventDefault();
     setError("");
@@ -308,6 +317,7 @@ export function RequisitionDetailPage() {
     }
   }
 
+  /** Agrega comentario interno al hilo de la requisicion. */
   async function addComment(event: FormEvent) {
     event.preventDefault();
     setError("");

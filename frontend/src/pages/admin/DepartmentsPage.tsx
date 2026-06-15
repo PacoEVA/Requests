@@ -8,6 +8,7 @@ import type { Department } from "../../types/employee.types";
 import { friendlyErrorMessage } from "../../utils/friendlyError";
 import { recordId, recordName, recordValue } from "../../utils/record";
 
+/** Administra alta, edicion, activacion y desactivacion de departamentos. */
 export function DepartmentsPage() {
   const { token } = useAuth();
   const [departments, setDepartments] = useState<Department[]>([]);
@@ -16,6 +17,7 @@ export function DepartmentsPage() {
   const [form, setForm] = useState({ name: "", description: "" });
   const [editingId, setEditingId] = useState<number | null>(null);
 
+  /** Recarga el listado de departamentos administrativos. */
   const reload = useCallback(() => {
     if (!token) return;
     adminService

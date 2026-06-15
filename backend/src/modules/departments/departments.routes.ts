@@ -12,8 +12,10 @@ const departmentSchema = z.object({
 export const departmentsRouter = Router();
 export const adminDepartmentsRouter = Router();
 
+// Listado publico usado por empleados al identificarse.
 departmentsRouter.get("/", departmentsController.listPublic);
 
+// Administracion de departamentos restringida a usuarios internos Admin.
 adminDepartmentsRouter.use(authenticateInternal);
 adminDepartmentsRouter.get("/", departmentsController.listAdmin);
 adminDepartmentsRouter.post("/", requireRole("Admin"), validate(departmentSchema), departmentsController.create);

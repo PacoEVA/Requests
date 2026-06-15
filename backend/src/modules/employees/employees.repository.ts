@@ -1,6 +1,7 @@
 import { getDbPool, sql } from "../../config/db";
 import type { EmployeeSession, IdentifyEmployeeInput, UpdateEmployeeInput } from "./employees.types";
 
+/** Mapea una fila SQL de empleado al contrato de sesion del frontend. */
 function mapEmployee(row: Record<string, unknown>): EmployeeSession {
   return {
     id: Number(row.Id),
@@ -14,6 +15,7 @@ function mapEmployee(row: Record<string, unknown>): EmployeeSession {
 }
 
 export class EmployeesRepository {
+  /** Busca un empleado activo por su token publico. */
   async findByToken(publicToken: string) {
     const pool = await getDbPool();
     const result = await pool
@@ -29,6 +31,7 @@ export class EmployeesRepository {
     return result.recordset[0] ? mapEmployee(result.recordset[0]) : null;
   }
 
+  /** Crea o actualiza empleado segun employeeCode y devuelve su sesion. */
   async identify(input: IdentifyEmployeeInput) {
     const pool = await getDbPool();
     const result = await pool
@@ -72,6 +75,7 @@ export class EmployeesRepository {
     return mapEmployee(result.recordset[0]);
   }
 
+  /** Actualiza un empleado activo encontrado por token publico. */
   async updateByToken(publicToken: string, input: UpdateEmployeeInput) {
     const pool = await getDbPool();
     const result = await pool

@@ -5,6 +5,7 @@ import { employeesService } from "../modules/employees/employees.service";
 import type { AuthenticatedUser } from "../modules/auth/auth.types";
 import { AppError } from "./error.middleware";
 
+/** Autentica una peticion que puede venir de empleado o de usuario interno. */
 export const authenticateEmployeeOrInternal: RequestHandler = async (req, _res, next) => {
   const header = req.headers.authorization;
   const token = header?.startsWith("Bearer ") ? header.slice("Bearer ".length) : null;

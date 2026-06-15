@@ -33,6 +33,7 @@ const resetPasswordSchema = z
 
 export const usersRouter = Router();
 
+// Gestion de usuarios internos restringida a Admin.
 usersRouter.use(authenticateInternal, requireRole("Admin"));
 usersRouter.get("/", usersController.list);
 usersRouter.post("/", validate(createUserSchema), usersController.create);

@@ -23,19 +23,23 @@ const ALLOWED_TRANSITIONS: Record<RequisitionStatusCode, RequisitionStatusCode[]
   CANCELLED: []
 };
 
+/** Verifica si un codigo pertenece al catalogo conocido de estados. */
 export function isKnownStatus(code: string): code is RequisitionStatusCode {
   return code in ALLOWED_TRANSITIONS;
 }
 
+/** Indica si un estado ya no admite cambios posteriores. */
 export function isFinalStatus(code: string) {
   return isKnownStatus(code) && FINAL_STATUS_CODES.has(code);
 }
 
+/** Valida que la transicion entre dos estados este permitida por negocio. */
 export function canTransition(from: string, to: string) {
   if (!isKnownStatus(from) || !isKnownStatus(to)) return false;
   return ALLOWED_TRANSITIONS[from].includes(to);
 }
 
+/** Permite mantener el estado actual o avanzar por una transicion valida. */
 export function canStayOrTransition(from: string, to: string) {
   return from === to || canTransition(from, to);
 }

@@ -7,6 +7,7 @@ export interface ApiOptions extends RequestInit {
   employeeToken?: string | null;
 }
 
+/** Ejecuta fetch contra la API, agrega credenciales y normaliza errores/respuestas. */
 export async function apiRequest<T>(path: string, options: ApiOptions = {}): Promise<T> {
   const headers = new Headers(options.headers);
   headers.set("Content-Type", "application/json");

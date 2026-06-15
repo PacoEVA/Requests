@@ -34,31 +34,37 @@ const STATUS_HISTORY_MESSAGES: Record<string, string> = {
   CANCELLED: "Requisicion cancelada"
 };
 
+/** Devuelve el texto humano para registrar en historial al cambiar estado. */
 function statusHistoryMessage(statusCode: string, statusName: string) {
   return STATUS_HISTORY_MESSAGES[statusCode] ?? `Estado actualizado a ${statusName}`;
 }
 
+/** Normaliza paginacion recibida por query y limita el tamano maximo. */
 function paging(filters: RequisitionFilters) {
   const page = Math.max(Number(filters.page ?? 1), 1);
   const pageSize = Math.min(Math.max(Number(filters.pageSize ?? 20), 1), 100);
   return { page, pageSize, offset: (page - 1) * pageSize };
 }
 
+/** Convierte un filtro de texto en patron LIKE o null. */
 function nullableLike(value: unknown) {
   const text = typeof value === "string" ? value.trim() : "";
   return text ? `%${text}%` : null;
 }
 
+/** Limpia texto opcional para usarlo como parametro SQL nullable. */
 function nullableText(value: unknown) {
   const text = typeof value === "string" ? value.trim() : "";
   return text || null;
 }
 
+/** Convierte ids opcionales a numeros positivos o null. */
 function nullableNumber(value: unknown) {
   const numberValue = Number(value);
   return Number.isFinite(numberValue) && numberValue > 0 ? numberValue : null;
 }
 
+/** Convierte fechas opcionales, incluyendo cierre de dia para filtros hasta. */
 function nullableDate(value: unknown, endOfDay = false) {
   const text = typeof value === "string" ? value.trim() : "";
   if (!text) return null;
@@ -73,6 +79,7 @@ function nullableDate(value: unknown, endOfDay = false) {
   return date;
 }
 
+/** Genera el ORDER BY permitido evitando columnas arbitrarias desde query. */
 function sortClause(filters: RequisitionFilters) {
   const sortColumns: Record<string, string> = {
     code: "R.Code",
@@ -85,6 +92,7 @@ function sortClause(filters: RequisitionFilters) {
   return `${column} ${direction}`;
 }
 
+/** Mapea metadatos minimos de requisicion para validaciones de servicio. */
 function mapMeta(row: Record<string, unknown>): RequisitionMeta {
   return {
     id: Number(row.Id),
@@ -98,6 +106,7 @@ function mapMeta(row: Record<string, unknown>): RequisitionMeta {
   };
 }
 
+/** Mapea una linea de requisicion a numeros confiables para calculos. */
 function mapItem(row: Record<string, unknown>): RequisitionItemRecord {
   return {
     id: Number(row.Id),
@@ -109,6 +118,7 @@ function mapItem(row: Record<string, unknown>): RequisitionItemRecord {
 }
 
 export class RequisitionsRepository {
+  /** Crea cabecera, lineas e historial inicial en una transaccion serializable. */
   async create(employeeId: number, input: CreateRequisitionInput) {
     const pool = await getDbPool();
     const transaction = new sql.Transaction(pool);
@@ -181,6 +191,7 @@ export class RequisitionsRepository {
     }
   }
 
+  /** Lista requisiciones de un empleado aplicando filtros y paginacion. */
   async listForEmployee(employeeId: number, filters: RequisitionFilters) {
     const { pageSize, offset } = paging(filters);
     const pool = await getDbPool();
@@ -222,6 +233,7 @@ export class RequisitionsRepository {
     return result.recordset;
   }
 
+  /** Lista requisiciones administrativas aplicando filtros, busquedas y paginacion. */
   async listForAdmin(filters: RequisitionFilters) {
     const { pageSize, offset } = paging(filters);
     const pool = await getDbPool();
@@ -278,14 +290,17 @@ export class RequisitionsRepository {
     return result.recordset;
   }
 
+  /** Busca detalle de requisicion garantizando que pertenece al empleado. */
   async findForEmployee(requisitionId: number, employeeId: number) {
     return this.findDetail(requisitionId, employeeId);
   }
 
+  /** Busca detalle administrativo, opcionalmente limitado por departamento. */
   async findForAdmin(requisitionId: number, departmentId?: number) {
     return this.findDetail(requisitionId, undefined, departmentId);
   }
 
+  /** Obtiene metadatos de estado, empleado y departamento para validaciones rapidas. */
   async getMeta(requisitionId: number) {
     const pool = await getDbPool();
     const result = await pool
@@ -311,6 +326,7 @@ export class RequisitionsRepository {
     return row ? mapMeta(row) : null;
   }
 
+  /** Obtiene lineas de requisicion para validar aprobaciones y entregas. */
   async getItems(requisitionId: number) {
     const pool = await getDbPool();
     const result = await pool
@@ -325,6 +341,7 @@ export class RequisitionsRepository {
     return result.recordset.map((row) => mapItem(row));
   }
 
+  /** Consulta cabecera, lineas e historial de una requisicion en una sola llamada. */
   private async findDetail(requisitionId: number, employeeId?: number, departmentId?: number) {
     const pool = await getDbPool();
     const result = await pool
@@ -383,6 +400,7 @@ export class RequisitionsRepository {
     };
   }
 
+  /** Cancela una requisicion desde empleado registrando motivo e historial. */
   async cancelByEmployee(requisitionId: number, employeeId: number, reason: string) {
     const pool = await getDbPool();
     const transaction = new sql.Transaction(pool);
@@ -450,6 +468,7 @@ export class RequisitionsRepository {
     }
   }
 
+  /** Lista comentarios con nombre de autor empleado o interno. */
   async listComments(requisitionId: number) {
     const pool = await getDbPool();
     const result = await pool
@@ -470,6 +489,7 @@ export class RequisitionsRepository {
     return result.recordset;
   }
 
+  /** Inserta comentario hecho por el empleado propietario. */
   async addEmployeeComment(requisitionId: number, employeeId: number, message: string) {
     const pool = await getDbPool();
     const result = await pool
@@ -486,6 +506,7 @@ export class RequisitionsRepository {
     return result.recordset[0];
   }
 
+  /** Inserta comentario hecho por un usuario interno. */
   async addInternalComment(requisitionId: number, userId: number, message: string) {
     const pool = await getDbPool();
     const result = await pool
@@ -502,6 +523,7 @@ export class RequisitionsRepository {
     return result.recordset[0];
   }
 
+  /** Actualiza estado, cantidades aprobadas e historial dentro de transaccion. */
   async updateStatus(requisitionId: number, userId: number, input: StatusChangeInput, previousStatusId: number) {
     const pool = await getDbPool();
     const transaction = new sql.Transaction(pool);
@@ -573,6 +595,7 @@ export class RequisitionsRepository {
     }
   }
 
+  /** Asigna responsable interno y registra la accion en historial. */
   async assign(requisitionId: number, assignedToUserId: number, performedByUserId: number) {
     const pool = await getDbPool();
     const transaction = new sql.Transaction(pool);
@@ -612,6 +635,7 @@ export class RequisitionsRepository {
     }
   }
 
+  /** Suma entregas por linea, calcula estado final/parcial y registra historial. */
   async deliver(requisitionId: number, userId: number, input: DeliverInput, previousStatusId: number): Promise<DeliveryResult | null> {
     const pool = await getDbPool();
     const transaction = new sql.Transaction(pool);

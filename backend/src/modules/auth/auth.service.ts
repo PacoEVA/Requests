@@ -5,6 +5,7 @@ import { hashPassword, verifyPassword } from "../../utils/password";
 import { authRepository } from "./auth.repository";
 import type { AuthenticatedUser, InternalUserRecord, LoginResponse } from "./auth.types";
 
+/** Reduce el registro de base de datos a los campos que viajan dentro del JWT. */
 function toTokenUser(user: InternalUserRecord): AuthenticatedUser {
   return {
     sub: user.id,
@@ -18,6 +19,7 @@ function toTokenUser(user: InternalUserRecord): AuthenticatedUser {
 }
 
 export class AuthService {
+  /** Valida usuario/contrasena, actualiza ultimo acceso y firma un JWT. */
   async login(username: string, password: string): Promise<LoginResponse> {
     const user = await authRepository.findByUsername(username);
 
@@ -51,6 +53,7 @@ export class AuthService {
     };
   }
 
+  /** Verifica la contrasena actual antes de guardar el nuevo hash. */
   async changePassword(userId: number, currentPassword: string, newPassword: string) {
     const user = await authRepository.findById(userId);
 
@@ -67,6 +70,7 @@ export class AuthService {
     await authRepository.updatePassword(user.id, await hashPassword(newPassword), false);
   }
 
+  /** Guarda una nueva contrasena sin exigir la anterior. */
   async forceChangePassword(userId: number, newPassword: string) {
     const user = await authRepository.findById(userId);
 

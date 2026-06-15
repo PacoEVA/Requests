@@ -3,6 +3,7 @@ import { useAuth } from "../contexts/AuthContext";
 import { useEmployee } from "../contexts/EmployeeContext";
 import type { RoleName } from "../types/auth.types";
 
+/** Protege rutas administrativas que requieren token interno valido. */
 export function AdminProtectedRoute() {
   const { isAuthenticated, user } = useAuth();
   const location = useLocation();
@@ -18,6 +19,7 @@ export function AdminProtectedRoute() {
   return <Outlet />;
 }
 
+/** Protege subrutas administrativas por rol. */
 export function AdminRoleRoute({ roles }: { roles: RoleName[] }) {
   const { user } = useAuth();
 
@@ -28,6 +30,7 @@ export function AdminRoleRoute({ roles }: { roles: RoleName[] }) {
   return <Outlet />;
 }
 
+/** Protege rutas de empleado que requieren token publico identificado. */
 export function EmployeeProtectedRoute() {
   const { employeeToken } = useEmployee();
   const location = useLocation();

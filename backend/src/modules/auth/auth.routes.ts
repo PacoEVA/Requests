@@ -20,6 +20,7 @@ const forceChangePasswordSchema = z.object({
 
 export const authRouter = Router();
 
+// Rutas publicas y autenticadas de sesion interna.
 authRouter.post("/login", validate(credentialsSchema), authController.login);
 authRouter.post("/logout", (_req, res) => res.json({ ok: true }));
 authRouter.get("/me", authenticateInternal, authController.me);

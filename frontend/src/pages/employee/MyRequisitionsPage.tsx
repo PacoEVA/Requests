@@ -24,6 +24,7 @@ const statusOptions = [
   { code: "CANCELLED", label: "Cancelada" }
 ];
 
+/** Lista las requisiciones del empleado con filtros y refresco realtime. */
 export function MyRequisitionsPage() {
   const { employeeToken } = useEmployee();
   const socket = useSocket();
@@ -47,6 +48,7 @@ export function MyRequisitionsPage() {
     [filters]
   );
 
+  /** Carga requisiciones propias aplicando los filtros activos. */
   const loadRequisitions = useCallback(() => {
     if (!employeeToken) return;
     setLoadError("");

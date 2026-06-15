@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import { authService } from "../../services/auth.service";
 
+/** Pantalla obligatoria para que el usuario interno defina una nueva contrasena. */
 export function ForceChangePasswordPage() {
   const navigate = useNavigate();
   const { token, logout } = useAuth();

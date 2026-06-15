@@ -27,14 +27,17 @@ const statusOptions = [
 
 const priorities = ["", "Baja", "Media", "Alta", "Urgente"];
 
+/** Extrae un numero de un registro de estadisticas con claves mixtas. */
 function statNumber(record: Record<string, unknown>, camelKey: string, pascalKey: string) {
   return Number(recordValue<number | string>(record, camelKey, pascalKey, 0));
 }
 
+/** Extrae texto de un registro de estadisticas con fallback vacio. */
 function statText(record: Record<string, unknown>, camelKey: string, pascalKey: string) {
   return recordValue<string>(record, camelKey, pascalKey, "");
 }
 
+/** Renderiza una lista de ranking con barra proporcional al valor mayor. */
 function RankingList({
   title,
   rows,
@@ -70,6 +73,7 @@ function RankingList({
   );
 }
 
+/** Pagina principal administrativa con resumen, recientes y estadisticas. */
 export function DashboardPage() {
   const { token, user } = useAuth();
   const socket = useSocket();
@@ -94,6 +98,7 @@ export function DashboardPage() {
     [filters]
   );
 
+  /** Carga resumen, requisiciones recientes y estadisticas con filtros actuales. */
   const loadDashboard = useCallback(() => {
     if (!token) return;
     dashboardService.summary(token).then(setSummary).catch(() => setSummary(emptySummary));

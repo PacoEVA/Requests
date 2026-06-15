@@ -3,6 +3,7 @@ import { FormEvent, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 
+/** Pantalla de inicio de sesion para usuarios internos. */
 export function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();

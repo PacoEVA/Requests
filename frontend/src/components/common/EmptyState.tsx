@@ -5,6 +5,7 @@ interface EmptyStateProps {
   message: string;
 }
 
+/** Muestra un estado vacio reutilizable con icono y mensaje. */
 export function EmptyState({ title, message }: EmptyStateProps) {
   return (
     <div className="empty-state-card">

@@ -9,17 +9,21 @@ interface AppErrorBoundaryState {
   hasError: boolean;
 }
 
+/** Captura errores React no controlados y muestra una pantalla de recuperacion. */
 export class AppErrorBoundary extends Component<AppErrorBoundaryProps, AppErrorBoundaryState> {
   state: AppErrorBoundaryState = { hasError: false };
 
+  /** Cambia el estado interno cuando React detecta un error de render. */
   static getDerivedStateFromError() {
     return { hasError: true };
   }
 
+  /** Registra detalles tecnicos del error para depuracion. */
   componentDidCatch(error: Error, info: ErrorInfo) {
     console.error("Unexpected application error", error, info);
   }
 
+  /** Renderiza hijos normales o la pantalla de fallback si hubo error. */
   render() {
     if (!this.state.hasError) return this.props.children;
 

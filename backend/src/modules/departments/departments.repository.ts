@@ -6,6 +6,7 @@ export interface DepartmentInput {
 }
 
 export class DepartmentsRepository {
+  /** Consulta departamentos ordenados por nombre, filtrando activos si se solicita. */
   async list(publicOnly = false) {
     const pool = await getDbPool();
     const result = await pool
@@ -21,6 +22,7 @@ export class DepartmentsRepository {
     return result.recordset;
   }
 
+  /** Inserta un departamento y devuelve el registro creado. */
   async create(input: DepartmentInput) {
     const pool = await getDbPool();
     const result = await pool
@@ -36,6 +38,7 @@ export class DepartmentsRepository {
     return result.recordset[0];
   }
 
+  /** Actualiza datos basicos de un departamento y devuelve el registro actualizado. */
   async update(id: number, input: DepartmentInput) {
     const pool = await getDbPool();
     const result = await pool
@@ -53,6 +56,7 @@ export class DepartmentsRepository {
     return result.recordset[0];
   }
 
+  /** Marca un departamento como activo o inactivo. */
   async setActive(id: number, isActive: boolean) {
     const pool = await getDbPool();
     await pool

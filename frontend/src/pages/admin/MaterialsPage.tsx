@@ -8,6 +8,7 @@ import type { Material } from "../../types/material.types";
 import { friendlyErrorMessage } from "../../utils/friendlyError";
 import { recordId, recordName, recordValue } from "../../utils/record";
 
+/** Administra materiales de catalogo y su disponibilidad para requisiciones. */
 export function MaterialsPage() {
   const { token } = useAuth();
   const [materials, setMaterials] = useState<Material[]>([]);
@@ -21,6 +22,7 @@ export function MaterialsPage() {
     isRequestable: true
   });
 
+  /** Recarga el catalogo administrativo de materiales. */
   const reload = useCallback(() => {
     if (!token) return;
     materialService

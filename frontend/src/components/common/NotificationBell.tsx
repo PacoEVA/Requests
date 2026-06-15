@@ -7,6 +7,7 @@ interface NotificationBellProps {
   scope: "admin" | "employee";
 }
 
+/** Formatea la fecha de una notificacion para mostrarla compacta en el panel. */
 function notificationDate(notification: AppNotification) {
   if (!notification.createdAt) return "";
   const date = new Date(notification.createdAt);
@@ -19,6 +20,7 @@ function notificationDate(notification: AppNotification) {
   });
 }
 
+/** Renderiza la campana, el contador y el panel de notificaciones sin leer. */
 export function NotificationBell({ scope }: NotificationBellProps) {
   const navigate = useNavigate();
   const { unreadCount, unreadNotifications, markAsRead, markAllAsRead } = useRealtimeNotifications();
@@ -28,6 +30,7 @@ export function NotificationBell({ scope }: NotificationBellProps) {
     [unreadCount]
   );
 
+  /** Marca la notificacion como leida y navega al detalle si esta asociada a una requisicion. */
   const openNotification = (notification: AppNotification) => {
     markAsRead(notification.id);
     setOpen(false);

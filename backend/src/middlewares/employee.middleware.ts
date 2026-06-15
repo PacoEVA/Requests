@@ -2,6 +2,7 @@ import type { RequestHandler } from "express";
 import { employeesService } from "../modules/employees/employees.service";
 import { AppError } from "./error.middleware";
 
+/** Valida el token publico de empleado y adjunta la sesion a req.employee. */
 export const authenticateEmployee: RequestHandler = async (req, _res, next) => {
   try {
     const token = req.header("x-employee-token");

@@ -1,6 +1,7 @@
 import { getDbPool, sql } from "../../config/db";
 import type { InternalUserRecord } from "./auth.types";
 
+/** Normaliza columnas SQL de usuario interno al contrato usado por auth. */
 function mapUserRecord(row: Record<string, unknown>): InternalUserRecord {
   return {
     id: Number(row.Id),
@@ -15,6 +16,7 @@ function mapUserRecord(row: Record<string, unknown>): InternalUserRecord {
 }
 
 export class AuthRepository {
+  /** Busca un usuario interno activo o inactivo por nombre de usuario. */
   async findByUsername(username: string) {
     const pool = await getDbPool();
     const result = await pool
@@ -38,6 +40,7 @@ export class AuthRepository {
     return result.recordset[0] ? mapUserRecord(result.recordset[0]) : null;
   }
 
+  /** Busca un usuario interno por id para refrescar sesion o validar cambios. */
   async findById(id: number) {
     const pool = await getDbPool();
     const result = await pool
@@ -61,6 +64,7 @@ export class AuthRepository {
     return result.recordset[0] ? mapUserRecord(result.recordset[0]) : null;
   }
 
+  /** Actualiza la marca de ultimo inicio de sesion. */
   async updateLastLogin(id: number) {
     const pool = await getDbPool();
     await pool
@@ -69,6 +73,7 @@ export class AuthRepository {
       .query("UPDATE InternalUsers SET LastLoginAt = SYSUTCDATETIME() WHERE Id = @Id");
   }
 
+  /** Guarda un hash nuevo y define si debe forzar cambio en el proximo login. */
   async updatePassword(id: number, passwordHash: string, requirePasswordChange: boolean) {
     const pool = await getDbPool();
     await pool

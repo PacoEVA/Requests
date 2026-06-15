@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 
+/** Encabezado estandar de pagina con titulo, eyebrow y acciones opcionales. */
 export function PageHeader({
   title,
   eyebrow,

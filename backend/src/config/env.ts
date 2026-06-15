@@ -12,6 +12,7 @@ const booleanFromEnv = z
     return false;
   });
 
+/** Crea un parser de numeros desde variables de entorno con valor por defecto. */
 const numberFromEnv = (defaultValue: number) =>
   z
     .union([z.number(), z.string()])
@@ -40,6 +41,7 @@ const envSchema = z.object({
 
 export const env = envSchema.parse(process.env);
 
+/** Origenes permitidos por CORS para desarrollo local y despliegues configurados. */
 export const allowedClientOrigins = Array.from(
   new Set([
     env.CLIENT_ORIGIN,

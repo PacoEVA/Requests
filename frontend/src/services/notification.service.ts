@@ -21,9 +21,11 @@ export interface NotificationRecord {
 }
 
 export const notificationService = {
+  /** Obtiene las notificaciones pendientes del usuario o empleado autenticado. */
   unread(credentials: NotificationCredentials) {
     return apiRequest<{ notifications: NotificationRecord[] }>("/notifications/unread", credentials);
   },
+  /** Marca una notificacion concreta como leida en el backend. */
   markRead(credentials: NotificationCredentials, notificationId: number) {
     return apiRequest<{ notification: NotificationRecord }>(`/notifications/${notificationId}/read`, {
       ...credentials,

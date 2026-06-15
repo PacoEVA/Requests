@@ -1,5 +1,6 @@
 import type { RequestHandler } from "express";
 
+/** Envuelve respuestas exitosas en { success, data } sin tocar errores. */
 export const responseMiddleware: RequestHandler = (_req, res, next) => {
   const originalJson = res.json.bind(res);
 

@@ -17,19 +17,23 @@ interface GlobalFeedbackValue {
 
 const GlobalFeedbackContext = createContext<GlobalFeedbackValue | null>(null);
 
+/** Escoge el icono visual segun el tono del aviso global. */
 function iconForTone(tone: FeedbackTone) {
   if (tone === "success") return CheckCircle2;
   if (tone === "info") return Info;
   return AlertCircle;
 }
 
+/** Muestra avisos globales y captura errores no controlados del navegador. */
 export function GlobalFeedbackProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<FeedbackItem[]>([]);
 
+  /** Quita un aviso de la pila. */
   const dismiss = useCallback((id: number) => {
     setItems((current) => current.filter((item) => item.id !== id));
   }, []);
 
+  /** Agrega un aviso temporal a la pila visible. */
   const notify = useCallback(
     (title: string, message: string, tone: FeedbackTone = "info") => {
       const id = Date.now() + Math.floor(Math.random() * 1000);
@@ -84,6 +88,7 @@ export function GlobalFeedbackProvider({ children }: { children: ReactNode }) {
   );
 }
 
+/** Accede al emisor de avisos globales. */
 export function useGlobalFeedback() {
   const context = useContext(GlobalFeedbackContext);
   if (!context) {

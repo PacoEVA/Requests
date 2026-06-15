@@ -28,6 +28,7 @@ const statusOptions = [
 
 const priorities = ["", "Baja", "Media", "Alta", "Urgente"];
 
+/** Lista requisiciones administrativas con filtros y actualizacion realtime. */
 export function RequisitionsPage() {
   const { token, user } = useAuth();
   const socket = useSocket();
@@ -61,6 +62,7 @@ export function RequisitionsPage() {
     [filters]
   );
 
+  /** Carga requisiciones aplicando los filtros visibles. */
   const loadRequisitions = useCallback(() => {
     if (!token) return;
     setLoadError("");

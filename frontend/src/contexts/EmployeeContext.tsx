@@ -13,6 +13,7 @@ interface EmployeeContextValue {
 const EmployeeContext = createContext<EmployeeContextValue | null>(null);
 const TOKEN_KEY = "requests.employeeToken";
 
+/** Mantiene identidad publica de empleado y perfil asociado. */
 export function EmployeeProvider({ children }: { children: ReactNode }) {
   const [employeeToken, setEmployeeToken] = useState<string | null>(() => localStorage.getItem(TOKEN_KEY));
   const [employee, setEmployee] = useState<Employee | null>(null);
@@ -58,6 +59,7 @@ export function EmployeeProvider({ children }: { children: ReactNode }) {
   return <EmployeeContext.Provider value={value}>{children}</EmployeeContext.Provider>;
 }
 
+/** Accede al contexto de empleado identificado. */
 export function useEmployee() {
   const value = useContext(EmployeeContext);
   if (!value) throw new Error("useEmployee debe usarse dentro de EmployeeProvider");

@@ -14,6 +14,7 @@ import { notificationsRouter } from "./modules/notifications/notifications.route
 import { adminRequisitionsRouter, requisitionsRouter } from "./modules/requisitions/requisitions.routes";
 import { usersRouter } from "./modules/users/users.routes";
 
+/** Configura middlewares globales y registra todas las rutas HTTP de la API. */
 export function createApp() {
   const app = express();
 

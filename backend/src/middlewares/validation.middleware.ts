@@ -4,6 +4,7 @@ import { AppError } from "./error.middleware";
 
 type ValidationTarget = "body" | "query" | "params";
 
+/** Valida body, query o params con Zod y reemplaza el valor por datos parseados. */
 export function validate(schema: ZodSchema, target: ValidationTarget = "body"): RequestHandler {
   return (req, _res, next) => {
     const result = schema.safeParse(req[target]);

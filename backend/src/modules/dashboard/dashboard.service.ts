@@ -2,6 +2,7 @@ import { dashboardRepository, type DashboardStatisticFilters } from "./dashboard
 import { AppError } from "../../middlewares/error.middleware";
 import type { AuthenticatedUser } from "../auth/auth.types";
 
+/** Obtiene el departamento permitido para supervisores y valida su configuracion. */
 function supervisorDepartmentId(user: AuthenticatedUser) {
   if (user.role !== "Supervisor") return undefined;
   const departmentId = Number(user.departmentId ?? 0);
@@ -12,18 +13,22 @@ function supervisorDepartmentId(user: AuthenticatedUser) {
 }
 
 export class DashboardService {
+  /** Devuelve resumen global para emisiones realtime internas. */
   summaryForAll() {
     return dashboardRepository.summary();
   }
 
+  /** Devuelve resumen limitado por departamento cuando el usuario es supervisor. */
   summary(user: AuthenticatedUser) {
     return dashboardRepository.summary(supervisorDepartmentId(user));
   }
 
+  /** Lista requisiciones recientes respetando alcance de rol. */
   recentRequisitions(user: AuthenticatedUser) {
     return dashboardRepository.recentRequisitions(supervisorDepartmentId(user));
   }
 
+  /** Aplica alcance de rol sobre los filtros estadisticos solicitados. */
   statistics(user: AuthenticatedUser, filters: DashboardStatisticFilters = {}) {
     const departmentId = supervisorDepartmentId(user);
     return dashboardRepository.statistics({

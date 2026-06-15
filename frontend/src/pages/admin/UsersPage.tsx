@@ -8,6 +8,7 @@ import type { Department } from "../../types/employee.types";
 import { friendlyErrorMessage } from "../../utils/friendlyError";
 import { recordId, recordName, recordValue } from "../../utils/record";
 
+/** Administra usuarios internos, roles, estados y restablecimiento de contrasenas. */
 export function UsersPage() {
   const { token } = useAuth();
   const [users, setUsers] = useState<unknown[]>([]);
@@ -23,6 +24,7 @@ export function UsersPage() {
     departmentId: ""
   });
 
+  /** Recarga usuarios internos y departamentos necesarios para el formulario. */
   const reload = useCallback(() => {
     if (!token) return;
     adminService

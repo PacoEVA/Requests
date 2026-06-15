@@ -63,6 +63,7 @@ const deliverSchema = z.object({
 export const requisitionsRouter = Router();
 export const adminRequisitionsRouter = Router();
 
+// Flujos de requisiciones del empleado.
 requisitionsRouter.post("/", authenticateEmployee, validate(createRequisitionSchema), requisitionsController.create);
 requisitionsRouter.get("/my", authenticateEmployee, requisitionsController.listMine);
 requisitionsRouter.get("/my/:id", authenticateEmployee, requisitionsController.getMine);
@@ -70,6 +71,7 @@ requisitionsRouter.patch("/my/:id/cancel", authenticateEmployee, validate(cancel
 requisitionsRouter.get("/:id/comments", authenticateEmployeeOrInternal, requisitionsController.listComments);
 requisitionsRouter.post("/:id/comments", authenticateEmployeeOrInternal, validate(commentSchema), requisitionsController.addComment);
 
+// Flujos administrativos de requisiciones.
 adminRequisitionsRouter.use(authenticateInternal);
 adminRequisitionsRouter.get("/", requisitionsController.listAdmin);
 adminRequisitionsRouter.get("/:id", requisitionsController.getAdmin);

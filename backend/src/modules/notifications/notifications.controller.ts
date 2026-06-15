@@ -2,6 +2,7 @@ import type { Request, RequestHandler } from "express";
 import { AppError } from "../../middlewares/error.middleware";
 import { notificationsService } from "./notifications.service";
 
+/** Traduce la sesion Express actual al destinatario usado por notificaciones. */
 function currentRecipient(req: Request) {
   if (req.employee) {
     return { employeeId: req.employee.id };
@@ -15,6 +16,7 @@ function currentRecipient(req: Request) {
 }
 
 export class NotificationsController {
+  /** Responde con las notificaciones sin leer del usuario o empleado autenticado. */
   listUnread: RequestHandler = async (req, res, next) => {
     try {
       const notifications = await notificationsService.listUnread(currentRecipient(req));
@@ -24,6 +26,7 @@ export class NotificationsController {
     }
   };
 
+  /** Valida el id de ruta y marca una notificacion como leida. */
   markRead: RequestHandler = async (req, res, next) => {
     try {
       const notificationId = Number(req.params.id);

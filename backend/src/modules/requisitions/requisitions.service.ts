@@ -21,26 +21,32 @@ import type {
 
 const MANAGER_ROLES = new Set<RoleName>(["Admin", "Compras"]);
 
+/** Obtiene un id tolerando columnas SQL PascalCase o payloads camelCase. */
 function recordId(record: Record<string, unknown> | null | undefined) {
   return Number(record?.Id ?? record?.id ?? 0);
 }
 
+/** Extrae un numero desde un registro dinamico de base de datos. */
 function recordNumber(record: Record<string, unknown> | null | undefined, key: string) {
   return Number(record?.[key] ?? 0);
 }
 
+/** Extrae el codigo de requisicion desde registros mixtos SQL/API. */
 function recordCode(record: Record<string, unknown> | null | undefined) {
   return String(record?.Code ?? record?.code ?? "");
 }
 
+/** Extrae texto con fallback desde registros dinamicos. */
 function recordText(record: Record<string, unknown> | null | undefined, key: string, fallback = "") {
   return String(record?.[key] ?? fallback);
 }
 
+/** Valida si un valor de formulario viene vacio o sin texto util. */
 function isBlank(value: unknown) {
   return typeof value !== "string" || value.trim().length === 0;
 }
 
+/** Ejecuta efectos secundarios sin fallar la operacion principal. */
 async function runSideEffect(task: () => Promise<void>) {
   try {
     await task();
@@ -49,12 +55,14 @@ async function runSideEffect(task: () => Promise<void>) {
   }
 }
 
+/** Restringe acciones operativas a Admin y Compras. */
 function assertManager(user: AuthenticatedUser) {
   if (!MANAGER_ROLES.has(user.role)) {
     throw new AppError("No tiene permiso para gestionar requisiciones", 403, "FORBIDDEN");
   }
 }
 
+/** Devuelve el departamento de supervisor o falla si no tiene uno asignado. */
 function supervisorDepartmentId(user: AuthenticatedUser) {
   if (user.role !== "Supervisor") return null;
   const departmentId = Number(user.departmentId ?? 0);
@@ -64,11 +72,13 @@ function supervisorDepartmentId(user: AuthenticatedUser) {
   return departmentId;
 }
 
+/** Garantiza que una requisicion exista antes de operar sobre ella. */
 function assertRequisitionFound(meta: RequisitionMeta | null) {
   if (!meta) throw new AppError("Requisicion no encontrada", 404, "REQUISITION_NOT_FOUND");
   return meta;
 }
 
+/** Valida que el cambio de estado sea conocido, permitido y no parta de un estado final. */
 function assertTransitionAllowed(meta: RequisitionMeta, targetStatusCode: string, allowSame = false) {
   if (!isKnownStatus(targetStatusCode)) {
     throw new AppError("Estado no valido", 400, "INVALID_STATUS");
@@ -87,6 +97,7 @@ function assertTransitionAllowed(meta: RequisitionMeta, targetStatusCode: string
   }
 }
 
+/** Valida cantidades aprobadas en una transicion de aprobacion. */
 function assertApprovalItems(inputItems: StatusChangeInput["items"], currentItems: RequisitionItemRecord[]) {
   if (!inputItems?.length) return;
 
@@ -112,6 +123,7 @@ function assertApprovalItems(inputItems: StatusChangeInput["items"], currentItem
   }
 }
 
+/** Valida cantidades entregadas y evita exceder lo aprobado/solicitado. */
 function assertDeliveryItems(input: DeliverInput, currentItems: RequisitionItemRecord[]) {
   const seen = new Set<number>();
   let hasNewDelivery = false;
@@ -146,6 +158,7 @@ function assertDeliveryItems(input: DeliverInput, currentItems: RequisitionItemR
   }
 }
 
+/** Decide si una entrega deja la requisicion parcial o totalmente entregada. */
 function deliveryTargetStatus(input: DeliverInput, currentItems: RequisitionItemRecord[]) {
   const deliveredByItem = new Map(input.items.map((item) => [item.requisitionItemId, item.quantityDelivered]));
   const allDelivered = currentItems.every((item) => {
@@ -158,6 +171,7 @@ function deliveryTargetStatus(input: DeliverInput, currentItems: RequisitionItem
 }
 
 export class RequisitionsService {
+  /** Crea una requisicion de empleado y dispara avisos realtime. */
   async create(employee: EmployeeSession, input: CreateRequisitionInput) {
     if (input.items.length === 0) {
       throw new AppError("La requisicion debe tener al menos un material", 400, "EMPTY_REQUISITION");
@@ -180,16 +194,19 @@ export class RequisitionsService {
     return requisition;
   }
 
+  /** Lista requisiciones del empleado autenticado. */
   listMine(employee: EmployeeSession, filters: RequisitionFilters) {
     return requisitionsRepository.listForEmployee(employee.id, filters);
   }
 
+  /** Obtiene el detalle de una requisicion propia del empleado. */
   async getMine(employee: EmployeeSession, id: number) {
     const requisition = await requisitionsRepository.findForEmployee(id, employee.id);
     if (!requisition) throw new AppError("Requisicion no encontrada", 404, "REQUISITION_NOT_FOUND");
     return requisition;
   }
 
+  /** Cancela una requisicion propia si no esta en estado final. */
   async cancelMine(employee: EmployeeSession, id: number, reason: string) {
     if (isBlank(reason)) {
       throw new AppError("Debe indicar un motivo", 400, "REASON_REQUIRED");
@@ -211,6 +228,7 @@ export class RequisitionsService {
     return requisition;
   }
 
+  /** Lista requisiciones visibles para usuarios internos, acotando supervisores. */
   listAdmin(user: AuthenticatedUser, filters: RequisitionFilters) {
     const departmentId = supervisorDepartmentId(user);
     return requisitionsRepository.listForAdmin({
@@ -219,12 +237,14 @@ export class RequisitionsService {
     });
   }
 
+  /** Obtiene el detalle administrativo respetando el alcance del rol. */
   async getAdmin(user: AuthenticatedUser, id: number) {
     const requisition = await requisitionsRepository.findForAdmin(id, supervisorDepartmentId(user) ?? undefined);
     if (!requisition) throw new AppError("Requisicion no encontrada", 404, "REQUISITION_NOT_FOUND");
     return requisition;
   }
 
+  /** Actualiza estado y cantidades aprobadas validando reglas de transicion. */
   async updateStatus(user: AuthenticatedUser, id: number, input: StatusChangeInput) {
     assertManager(user);
 
@@ -249,6 +269,7 @@ export class RequisitionsService {
     return requisition;
   }
 
+  /** Asigna responsable interno a una requisicion abierta. */
   async assign(user: AuthenticatedUser, id: number, assignedToUserId: number) {
     assertManager(user);
     const meta = assertRequisitionFound(await requisitionsRepository.getMeta(id));
@@ -263,6 +284,7 @@ export class RequisitionsService {
     return requisition;
   }
 
+  /** Registra cantidades entregadas y calcula el siguiente estado. */
   async deliver(user: AuthenticatedUser, id: number, input: DeliverInput) {
     assertManager(user);
     const meta = assertRequisitionFound(await requisitionsRepository.getMeta(id));
@@ -282,6 +304,7 @@ export class RequisitionsService {
     return result.requisition;
   }
 
+  /** Lista comentarios para el empleado propietario. */
   async listCommentsForEmployee(employee: EmployeeSession, id: number) {
     const meta = assertRequisitionFound(await requisitionsRepository.getMeta(id));
     if (meta.employeeId !== employee.id) {
@@ -291,6 +314,7 @@ export class RequisitionsService {
     return requisitionsRepository.listComments(id);
   }
 
+  /** Lista comentarios para usuarios internos con acceso al detalle. */
   async listCommentsForAdmin(user: AuthenticatedUser, id: number) {
     const requisition = await requisitionsRepository.findForAdmin(id, supervisorDepartmentId(user) ?? undefined);
     if (!requisition) {
@@ -299,6 +323,7 @@ export class RequisitionsService {
     return requisitionsRepository.listComments(id);
   }
 
+  /** Agrega comentario de empleado y notifica a roles internos. */
   async addEmployeeComment(employee: EmployeeSession, id: number, message: string) {
     const meta = assertRequisitionFound(await requisitionsRepository.getMeta(id));
     if (meta.employeeId !== employee.id) {
@@ -310,6 +335,7 @@ export class RequisitionsService {
     return comment;
   }
 
+  /** Agrega comentario interno y notifica al empleado. */
   async addInternalComment(user: AuthenticatedUser, id: number, message: string) {
     assertManager(user);
     const meta = assertRequisitionFound(await requisitionsRepository.getMeta(id));
@@ -319,6 +345,7 @@ export class RequisitionsService {
     return comment;
   }
 
+  /** Notifica la creacion y refresca dashboards despues de crear requisicion. */
   private async afterCreated(requisition: Record<string, unknown> | null) {
     if (!requisition) return;
     const requisitionId = recordId(requisition);
@@ -349,6 +376,7 @@ export class RequisitionsService {
     await this.emitDashboardSummary(departmentId);
   }
 
+  /** Emite avisos y resumenes tras un cambio de estado. */
   private async afterStatusChanged(meta: RequisitionMeta, requisition: Record<string, unknown>, targetStatusCode: string) {
     const code = recordCode(requisition) || meta.code;
     const newStatusName = recordText(requisition, "StatusName", targetStatusCode);
@@ -386,6 +414,7 @@ export class RequisitionsService {
     await this.emitDashboardSummary(meta.departmentId);
   }
 
+  /** Notifica cancelaciones hechas por empleado o administracion. */
   private async afterCancelled(meta: RequisitionMeta, requisition: Record<string, unknown>, message: string) {
     const code = recordCode(requisition) || meta.code;
     await this.notifyRole("Admin", meta.id, "Requisicion cancelada", `${code} fue cancelada`, "REQUISITION_CANCELLED");
@@ -406,6 +435,7 @@ export class RequisitionsService {
     await this.emitDashboardSummary(meta.departmentId);
   }
 
+  /** Notifica asignacion directa al usuario responsable. */
   private async afterAssigned(meta: RequisitionMeta, requisition: Record<string, unknown>, assignedToUserId: number) {
     const code = recordCode(requisition) || meta.code;
     const notification = await notificationsService.create({
@@ -427,6 +457,7 @@ export class RequisitionsService {
     });
   }
 
+  /** Notifica entregas y cambios de estado derivados. */
   private async afterDelivered(meta: RequisitionMeta, result: { requisition: Record<string, unknown> | null; statusCode: string; statusName: string }) {
     const code = recordCode(result.requisition) || meta.code;
     await this.notifyEmployee(meta.employeeId, meta.id, "Entrega registrada", `${code} cambio a ${result.statusName}`, "DELIVERY_REGISTERED");
@@ -457,6 +488,7 @@ export class RequisitionsService {
     await this.emitDashboardSummary(meta.departmentId);
   }
 
+  /** Notifica comentarios nuevos a la contraparte correspondiente. */
   private async afterCommentCreated(meta: RequisitionMeta, comment: Record<string, unknown>, authorName: string, authorType: "EMPLOYEE" | "INTERNAL_USER") {
     const payload = {
       requisitionId: meta.id,
@@ -484,6 +516,7 @@ export class RequisitionsService {
     });
   }
 
+  /** Crea y emite una notificacion para el empleado propietario de la requisicion. */
   private async notifyEmployee(employeeId: number, requisitionId: number, title: string, message: string, type: string) {
     const notification = await notificationsService.create({
       recipientType: "EMPLOYEE",
@@ -499,6 +532,7 @@ export class RequisitionsService {
     });
   }
 
+  /** Crea notificaciones por usuario del rol y las emite a sus salas individuales. */
   private async notifyRole(role: RoleName, requisitionId: number, title: string, message: string, type: string) {
     const notifications = await notificationsService.createForRole(role, {
       requisitionId,
@@ -516,6 +550,7 @@ export class RequisitionsService {
     });
   }
 
+  /** Emite el resumen actualizado del dashboard global y del departamento afectado. */
   private async emitDashboardSummary(departmentId?: number) {
     const summary = await dashboardService.summaryForAll();
     await safeEmit((io) => {

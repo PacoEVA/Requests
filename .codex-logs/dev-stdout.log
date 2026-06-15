@@ -671,3 +671,229 @@
 [backend] Node.js v24.11.1
 [backend] 11:05:55 a.m. [tsx] change in ./src\middlewares\validation.middleware.ts Rerunning...
 [backend] cRequests API listening on http://localhost:4100
+[backend] 8:39:39 a.m. [tsx] change in ./src\modules\notifications\notifications.service.ts Rerunning...
+[backend] cnode:events:486
+[backend]       throw er; // Unhandled 'error' event
+[backend]       ^
+[backend] 
+[backend] Error: listen EADDRINUSE: address already in use :::4100
+[backend]     at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+[backend]     at listenInCluster (node:net:1997:12)
+[backend]     at Server.listen (node:net:2102:7)
+[backend]     at http (C:\Users\sgarcias\Desktop\Requests\backend\src\server.ts:11:8)
+[backend]     at Object.<anonymous> (C:\Users\sgarcias\Desktop\Requests\backend\src\server.ts:13:2)
+[backend]     at Module._compile (node:internal/modules/cjs/loader:1761:14)
+[backend]     at Object.transformer (C:\Users\sgarcias\Desktop\Requests\node_modules\tsx\dist\register-BOkp8V6j.cjs:9:3176)
+[backend]     at Module.load (node:internal/modules/cjs/loader:1481:32)
+[backend]     at Module._load (node:internal/modules/cjs/loader:1300:12)
+[backend]     at TracingChannel.traceSync (node:diagnostics_channel:328:14)
+[backend] Emitted 'error' event on Server instance at:
+[backend]     at emitErrorNT (node:net:1976:8)
+[backend]     at process.processTicksAndRejections (node:internal/process/task_queues:89:21) {
+[backend]   code: 'EADDRINUSE',
+[backend]   errno: -4091,
+[backend]   syscall: 'listen',
+[backend]   address: '::',
+[backend]   port: 4100
+[backend] }
+[backend] 
+[backend] Node.js v24.11.1
+[backend] 8:39:52 a.m. [tsx] change in ./src\modules\notifications\notifications.repository.ts Rerunning...
+[backend] cRequests API listening on http://localhost:4100
+[backend] 8:44:27 a.m. [tsx] change in ./src\modules\notifications\notifications.controller.ts Restarting...
+[backend] cnode:events:486
+[backend]       throw er; // Unhandled 'error' event
+[backend]       ^
+[backend] 
+[backend] Error: listen EADDRINUSE: address already in use :::4100
+[backend]     at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+[backend]     at listenInCluster (node:net:1997:12)
+[backend]     at Server.listen (node:net:2102:7)
+[backend]     at http (C:\Users\sgarcias\Desktop\Requests\backend\src\server.ts:11:8)
+[backend]     at Object.<anonymous> (C:\Users\sgarcias\Desktop\Requests\backend\src\server.ts:13:2)
+[backend]     at Module._compile (node:internal/modules/cjs/loader:1761:14)
+[backend]     at Object.transformer (C:\Users\sgarcias\Desktop\Requests\node_modules\tsx\dist\register-BOkp8V6j.cjs:9:3176)
+[backend]     at Module.load (node:internal/modules/cjs/loader:1481:32)
+[backend]     at Module._load (node:internal/modules/cjs/loader:1300:12)
+[backend]     at TracingChannel.traceSync (node:diagnostics_channel:328:14)
+[backend] Emitted 'error' event on Server instance at:
+[backend]     at emitErrorNT (node:net:1976:8)
+[backend]     at process.processTicksAndRejections (node:internal/process/task_queues:89:21) {
+[backend]   code: 'EADDRINUSE',
+[backend]   errno: -4091,
+[backend]   syscall: 'listen',
+[backend]   address: '::',
+[backend]   port: 4100
+[backend] }
+[backend] 
+[backend] Node.js v24.11.1
+[backend] 8:45:10 a.m. [tsx] change in ./src\modules\requisitions\requisitions.service.ts Rerunning...
+[backend] cRequests API listening on http://localhost:4100
+[backend] 11:32:45 a.m. [tsx] change in ./src\modules\notifications\notifications.routes.ts Rerunning...
+[backend] cnode:events:486
+[backend]       throw er; // Unhandled 'error' event
+[backend]       ^
+[backend] 
+[backend] Error: listen EADDRINUSE: address already in use :::4100
+[backend]     at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+[backend]     at listenInCluster (node:net:1997:12)
+[backend]     at Server.listen (node:net:2102:7)
+[backend]     at http (C:\Users\sgarcias\Desktop\Requests\backend\src\server.ts:11:8)
+[backend]     at Object.<anonymous> (C:\Users\sgarcias\Desktop\Requests\backend\src\server.ts:13:2)
+[backend]     at Module._compile (node:internal/modules/cjs/loader:1761:14)
+[backend]     at Object.transformer (C:\Users\sgarcias\Desktop\Requests\node_modules\tsx\dist\register-BOkp8V6j.cjs:9:3176)
+[backend]     at Module.load (node:internal/modules/cjs/loader:1481:32)
+[backend]     at Module._load (node:internal/modules/cjs/loader:1300:12)
+[backend]     at TracingChannel.traceSync (node:diagnostics_channel:328:14)
+[backend] Emitted 'error' event on Server instance at:
+[backend]     at emitErrorNT (node:net:1976:8)
+[backend]     at process.processTicksAndRejections (node:internal/process/task_queues:89:21) {
+[backend]   code: 'EADDRINUSE',
+[backend]   errno: -4091,
+[backend]   syscall: 'listen',
+[backend]   address: '::',
+[backend]   port: 4100
+[backend] }
+[backend] 
+[backend] Node.js v24.11.1
+[backend] 11:33:02 a.m. [tsx] change in ./src\modules\requisitions\requisitions.service.ts Rerunning...
+[backend] cnode:events:486
+[backend]       throw er; // Unhandled 'error' event
+[backend]       ^
+[backend] 
+[backend] Error: listen EADDRINUSE: address already in use :::4100
+[backend]     at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+[backend]     at listenInCluster (node:net:1997:12)
+[backend]     at Server.listen (node:net:2102:7)
+[backend]     at http (C:\Users\sgarcias\Desktop\Requests\backend\src\server.ts:11:8)
+[backend]     at Object.<anonymous> (C:\Users\sgarcias\Desktop\Requests\backend\src\server.ts:13:2)
+[backend]     at Module._compile (node:internal/modules/cjs/loader:1761:14)
+[backend]     at Object.transformer (C:\Users\sgarcias\Desktop\Requests\node_modules\tsx\dist\register-BOkp8V6j.cjs:9:3176)
+[backend]     at Module.load (node:internal/modules/cjs/loader:1481:32)
+[backend]     at Module._load (node:internal/modules/cjs/loader:1300:12)
+[backend]     at TracingChannel.traceSync (node:diagnostics_channel:328:14)
+[backend] Emitted 'error' event on Server instance at:
+[backend]     at emitErrorNT (node:net:1976:8)
+[backend]     at process.processTicksAndRejections (node:internal/process/task_queues:89:21) {
+[backend]   code: 'EADDRINUSE',
+[backend]   errno: -4091,
+[backend]   syscall: 'listen',
+[backend]   address: '::',
+[backend]   port: 4100
+[backend] }
+[backend] 
+[backend] Node.js v24.11.1
+[backend] 9:16:27 a.m. [tsx] change in ./src\sockets\socket-hub.ts Rerunning...
+[backend] cRequests API listening on http://localhost:4100
+[backend] 9:17:21 a.m. [tsx] change in ./src\modules\employees\employees.repository.ts Restarting...
+[backend] cnode:events:486
+[backend]       throw er; // Unhandled 'error' event
+[backend]       ^
+[backend] 
+[backend] Error: listen EADDRINUSE: address already in use :::4100
+[backend]     at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+[backend]     at listenInCluster (node:net:1997:12)
+[backend]     at Server.listen (node:net:2102:7)
+[backend]     at http (C:\Users\sgarcias\Desktop\Requests\backend\src\server.ts:11:8)
+[backend]     at Object.<anonymous> (C:\Users\sgarcias\Desktop\Requests\backend\src\server.ts:13:2)
+[backend]     at Module._compile (node:internal/modules/cjs/loader:1761:14)
+[backend]     at Object.transformer (C:\Users\sgarcias\Desktop\Requests\node_modules\tsx\dist\register-BOkp8V6j.cjs:9:3176)
+[backend]     at Module.load (node:internal/modules/cjs/loader:1481:32)
+[backend]     at Module._load (node:internal/modules/cjs/loader:1300:12)
+[backend]     at TracingChannel.traceSync (node:diagnostics_channel:328:14)
+[backend] Emitted 'error' event on Server instance at:
+[backend]     at emitErrorNT (node:net:1976:8)
+[backend]     at process.processTicksAndRejections (node:internal/process/task_queues:89:21) {
+[backend]   code: 'EADDRINUSE',
+[backend]   errno: -4091,
+[backend]   syscall: 'listen',
+[backend]   address: '::',
+[backend]   port: 4100
+[backend] }
+[backend] 
+[backend] Node.js v24.11.1
+[backend] 9:18:11 a.m. [tsx] change in ./src\modules\requisitions\requisitions.controller.ts Rerunning...
+[backend] cRequests API listening on http://localhost:4100
+[backend] 9:18:39 a.m. [tsx] change in ./src\modules\requisitions\requisitions.service.ts Restarting...
+[backend] cnode:events:486
+[backend]       throw er; // Unhandled 'error' event
+[backend]       ^
+[backend] 
+[backend] Error: listen EADDRINUSE: address already in use :::4100
+[backend]     at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+[backend]     at listenInCluster (node:net:1997:12)
+[backend]     at Server.listen (node:net:2102:7)
+[backend]     at http (C:\Users\sgarcias\Desktop\Requests\backend\src\server.ts:11:8)
+[backend]     at Object.<anonymous> (C:\Users\sgarcias\Desktop\Requests\backend\src\server.ts:13:2)
+[backend]     at Module._compile (node:internal/modules/cjs/loader:1761:14)
+[backend]     at Object.transformer (C:\Users\sgarcias\Desktop\Requests\node_modules\tsx\dist\register-BOkp8V6j.cjs:9:3176)
+[backend]     at Module.load (node:internal/modules/cjs/loader:1481:32)
+[backend]     at Module._load (node:internal/modules/cjs/loader:1300:12)
+[backend]     at TracingChannel.traceSync (node:diagnostics_channel:328:14)
+[backend] Emitted 'error' event on Server instance at:
+[backend]     at emitErrorNT (node:net:1976:8)
+[backend]     at process.processTicksAndRejections (node:internal/process/task_queues:89:21) {
+[backend]   code: 'EADDRINUSE',
+[backend]   errno: -4091,
+[backend]   syscall: 'listen',
+[backend]   address: '::',
+[backend]   port: 4100
+[backend] }
+[backend] 
+[backend] Node.js v24.11.1
+[backend] 9:19:04 a.m. [tsx] change in ./src\modules\requisitions\requisitions.repository.ts Rerunning...
+[backend] cnode:events:486
+[backend]       throw er; // Unhandled 'error' event
+[backend]       ^
+[backend] 
+[backend] Error: listen EADDRINUSE: address already in use :::4100
+[backend]     at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+[backend]     at listenInCluster (node:net:1997:12)
+[backend]     at Server.listen (node:net:2102:7)
+[backend]     at http (C:\Users\sgarcias\Desktop\Requests\backend\src\server.ts:11:8)
+[backend]     at Object.<anonymous> (C:\Users\sgarcias\Desktop\Requests\backend\src\server.ts:13:2)
+[backend]     at Module._compile (node:internal/modules/cjs/loader:1761:14)
+[backend]     at Object.transformer (C:\Users\sgarcias\Desktop\Requests\node_modules\tsx\dist\register-BOkp8V6j.cjs:9:3176)
+[backend]     at Module.load (node:internal/modules/cjs/loader:1481:32)
+[backend]     at Module._load (node:internal/modules/cjs/loader:1300:12)
+[backend]     at TracingChannel.traceSync (node:diagnostics_channel:328:14)
+[backend] Emitted 'error' event on Server instance at:
+[backend]     at emitErrorNT (node:net:1976:8)
+[backend]     at process.processTicksAndRejections (node:internal/process/task_queues:89:21) {
+[backend]   code: 'EADDRINUSE',
+[backend]   errno: -4091,
+[backend]   syscall: 'listen',
+[backend]   address: '::',
+[backend]   port: 4100
+[backend] }
+[backend] 
+[backend] Node.js v24.11.1
+[backend] 9:21:37 a.m. [tsx] change in ./src\modules\users\users.routes.ts Rerunning...
+[backend] cRequests API listening on http://localhost:4100
+[backend] 9:22:00 a.m. [tsx] change in ./src\sockets\index.ts Restarting...
+[backend] cnode:events:486
+[backend]       throw er; // Unhandled 'error' event
+[backend]       ^
+[backend] 
+[backend] Error: listen EADDRINUSE: address already in use :::4100
+[backend]     at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+[backend]     at listenInCluster (node:net:1997:12)
+[backend]     at Server.listen (node:net:2102:7)
+[backend]     at http (C:\Users\sgarcias\Desktop\Requests\backend\src\server.ts:11:8)
+[backend]     at Object.<anonymous> (C:\Users\sgarcias\Desktop\Requests\backend\src\server.ts:13:2)
+[backend]     at Module._compile (node:internal/modules/cjs/loader:1761:14)
+[backend]     at Object.transformer (C:\Users\sgarcias\Desktop\Requests\node_modules\tsx\dist\register-BOkp8V6j.cjs:9:3176)
+[backend]     at Module.load (node:internal/modules/cjs/loader:1481:32)
+[backend]     at Module._load (node:internal/modules/cjs/loader:1300:12)
+[backend]     at TracingChannel.traceSync (node:diagnostics_channel:328:14)
+[backend] Emitted 'error' event on Server instance at:
+[backend]     at emitErrorNT (node:net:1976:8)
+[backend]     at process.processTicksAndRejections (node:internal/process/task_queues:89:21) {
+[backend]   code: 'EADDRINUSE',
+[backend]   errno: -4091,
+[backend]   syscall: 'listen',
+[backend]   address: '::',
+[backend]   port: 4100
+[backend] }
+[backend] 
+[backend] Node.js v24.11.1

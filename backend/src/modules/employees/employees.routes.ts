@@ -15,6 +15,7 @@ const updateEmployeeSchema = identifySchema.omit({ employeeCode: true });
 
 export const employeesRouter = Router();
 
+// Identificacion publica y perfil protegido por token de empleado.
 employeesRouter.post("/identify", validate(identifySchema), employeesController.identify);
 employeesRouter.get("/me", authenticateEmployee, employeesController.me);
 employeesRouter.put("/me", authenticateEmployee, validate(updateEmployeeSchema), employeesController.updateMe);

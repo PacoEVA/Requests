@@ -1,5 +1,6 @@
 import type { LucideIcon } from "lucide-react";
 
+/** Tarjeta compacta para mostrar una metrica del dashboard. */
 export function MetricCard({
   label,
   value,

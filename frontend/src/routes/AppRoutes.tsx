@@ -19,6 +19,7 @@ import { RequisitionDetailPage } from "../pages/admin/RequisitionDetailPage";
 import { RequisitionsPage } from "../pages/admin/RequisitionsPage";
 import { UsersPage } from "../pages/admin/UsersPage";
 
+/** Define el arbol de rutas publicas, de empleado y administrativas. */
 export function AppRoutes() {
   return (
     <Routes>

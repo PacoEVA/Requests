@@ -13,6 +13,7 @@ const emptyItem: RequisitionItemDraft = {
   quantityRequested: 1
 };
 
+/** Formulario para que un empleado cree una requisicion con una o mas lineas. */
 export function CreateRequisitionPage() {
   const navigate = useNavigate();
   const { employeeToken } = useEmployee();

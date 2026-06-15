@@ -4,6 +4,7 @@ import { NotificationBell } from "../common/NotificationBell";
 import { useEmployee } from "../../contexts/EmployeeContext";
 import { useRealtimeNotifications } from "../../contexts/RealtimeNotificationsContext";
 
+/** Layout lateral del portal de empleado. */
 export function EmployeeShell() {
   const { employee } = useEmployee();
   const { permission, requestBrowserPermission } = useRealtimeNotifications();
@@ -35,6 +36,7 @@ export function EmployeeShell() {
             <UserRound size={18} /> Perfil
           </NavLink>
         </nav>
+        {/* Campana global: muestra mensajes y cambios pendientes del empleado. */}
         <NotificationBell scope="employee" />
         {permission === "default" ? (
           <button className="icon-text-button subtle" type="button" onClick={requestBrowserPermission}>

@@ -20,6 +20,7 @@ const dbConfig: sql.config = {
 
 let pool: sql.ConnectionPool | null = null;
 
+/** Reutiliza una unica conexion pool de SQL Server para toda la aplicacion. */
 export async function getDbPool() {
   if (!pool) {
     pool = await sql.connect(dbConfig);

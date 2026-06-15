@@ -3,10 +3,12 @@ import { employeesRepository } from "./employees.repository";
 import type { IdentifyEmployeeInput, UpdateEmployeeInput } from "./employees.types";
 
 export class EmployeesService {
+  /** Identifica un empleado existente por codigo o crea uno nuevo. */
   async identify(input: IdentifyEmployeeInput) {
     return employeesRepository.identify(input);
   }
 
+  /** Obtiene la sesion del empleado desde el token publico. */
   async getSessionByToken(publicToken: string) {
     const employee = await employeesRepository.findByToken(publicToken);
 
@@ -17,6 +19,7 @@ export class EmployeesService {
     return employee;
   }
 
+  /** Actualiza la informacion del empleado identificado por token. */
   async update(publicToken: string, input: UpdateEmployeeInput) {
     const employee = await employeesRepository.updateByToken(publicToken, input);
 

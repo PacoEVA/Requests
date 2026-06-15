@@ -1,3 +1,4 @@
+/** Convierte errores desconocidos en mensajes seguros para mostrar al usuario. */
 export function friendlyErrorMessage(error: unknown, fallback = "No se pudo completar la accion.") {
   if (error instanceof Error && error.message.trim()) {
     return normalizeMessage(error.message);
@@ -10,6 +11,7 @@ export function friendlyErrorMessage(error: unknown, fallback = "No se pudo comp
   return fallback;
 }
 
+/** Normaliza mensajes tecnicos frecuentes a textos entendibles. */
 export function normalizeMessage(message: string) {
   const text = message.trim();
 
@@ -24,6 +26,7 @@ export function normalizeMessage(message: string) {
   return text;
 }
 
+/** Traduce status HTTP y mensaje de API a una respuesta de interfaz consistente. */
 export function apiStatusMessage(status: number, message?: string) {
   const normalized = message ? normalizeMessage(message) : "";
   if (normalized) return normalized;

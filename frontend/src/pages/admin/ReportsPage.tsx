@@ -10,43 +10,51 @@ import { friendlyErrorMessage } from "../../utils/friendlyError";
 import { humanizeHistoryNotes, humanizeHistoryTitle } from "../../utils/requisitionHistory";
 import { recordValue } from "../../utils/record";
 
+/** Normaliza valores desconocidos a arreglos de registros. */
 function asRecords(value: unknown) {
   return Array.isArray(value) ? (value as Array<Record<string, unknown>>) : [];
 }
 
+/** Escapa valores para una celda CSV segura. */
 function csvEscape(value: unknown) {
   const text = String(value ?? "");
   return `"${text.replaceAll('"', '""')}"`;
 }
 
+/** Lee texto desde registros camelCase/PascalCase para reportes. */
 function valueText(record: Record<string, unknown>, camelKey: string, pascalKey: string, fallback = "") {
   const value = recordValue<unknown>(record, camelKey, pascalKey, fallback);
   return value === null || value === undefined ? fallback : String(value);
 }
 
+/** Formatea numeros de reportes con separadores locales. */
 function numberText(record: Record<string, unknown>, camelKey: string, pascalKey: string) {
   const value = recordValue<unknown>(record, camelKey, pascalKey, 0);
   return Number(value ?? 0).toLocaleString();
 }
 
+/** Formatea fechas de reportes o devuelve el valor original si no parsea. */
 function dateText(value: unknown) {
   if (!value) return "";
   const date = new Date(String(value));
   return Number.isNaN(date.getTime()) ? String(value) : date.toLocaleString();
 }
 
+/** Escribe texto en PDF con salto de linea y devuelve la siguiente posicion Y. */
 function addWrappedText(doc: jsPDF, text: string, x: number, y: number, maxWidth: number) {
   const lines = doc.splitTextToSize(text || "-", maxWidth);
   doc.text(lines, x, y);
   return y + lines.length * 5;
 }
 
+/** Agrega pagina al PDF si el siguiente bloque no cabe en la actual. */
 function ensurePage(doc: jsPDF, y: number, needed = 18) {
   if (y + needed <= 280) return y;
   doc.addPage();
   return 18;
 }
 
+/** Escribe una pareja etiqueta/valor en el PDF. */
 function addKeyValue(doc: jsPDF, label: string, value: string, x: number, y: number) {
   doc.setFont("helvetica", "bold");
   doc.text(label, x, y);
@@ -54,6 +62,7 @@ function addKeyValue(doc: jsPDF, label: string, value: string, x: number, y: num
   doc.text(value || "-", x + 34, y);
 }
 
+/** Dibuja encabezados de tabla dentro del PDF. */
 function addTableHeader(doc: jsPDF, headers: Array<{ label: string; x: number }>, y: number) {
   doc.setFillColor(239, 244, 247);
   doc.rect(14, y - 6, 182, 9, "F");
@@ -62,12 +71,14 @@ function addTableHeader(doc: jsPDF, headers: Array<{ label: string; x: number }>
   doc.setFont("helvetica", "normal");
 }
 
+/** Construye el nombre visible de un material, incluyendo codigo si existe. */
 function materialName(item: Record<string, unknown>) {
   const code = valueText(item, "materialItemCode", "MaterialItemCode");
   const name = valueText(item, "materialName", "MaterialName", valueText(item, "manualMaterialName", "ManualMaterialName", "Material"));
   return code ? `${code} - ${name}` : name;
 }
 
+/** Genera y descarga el PDF completo de una requisicion. */
 function saveRequisitionPdf(requisition: Record<string, unknown>) {
   const doc = new jsPDF({ unit: "mm", format: "letter" });
   const code = valueText(requisition, "code", "Code", "requisicion");
@@ -166,6 +177,7 @@ function saveRequisitionPdf(requisition: Record<string, unknown>) {
   doc.save(`${code}.pdf`);
 }
 
+/** Genera y descarga el CSV del resultado de reportes. */
 function downloadCsv(rows: RequisitionSummary[]) {
   const headers = ["Codigo", "Empleado", "Departamento", "Fecha", "Prioridad", "Estado", "Responsable"];
   const lines = rows.map((item) => {
@@ -192,6 +204,7 @@ function downloadCsv(rows: RequisitionSummary[]) {
   URL.revokeObjectURL(url);
 }
 
+/** Pagina de reportes con filtros, exportacion CSV y PDF por requisicion. */
 export function ReportsPage() {
   const { token } = useAuth();
   const [rows, setRows] = useState<RequisitionSummary[]>([]);
@@ -206,6 +219,7 @@ export function ReportsPage() {
   const [messageType, setMessageType] = useState<"error" | "success">("success");
   const [exportingId, setExportingId] = useState<number | null>(null);
 
+  /** Ejecuta la busqueda de reportes con los filtros actuales. */
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
     if (!token) return;
@@ -223,6 +237,7 @@ export function ReportsPage() {
     }
   }
 
+  /** Descarga el detalle actualizado de una requisicion y lo exporta a PDF. */
   async function downloadRequisitionPdf(requisitionId: number) {
     if (!token) return;
 

@@ -14,6 +14,7 @@ interface AuthContextValue {
 const AuthContext = createContext<AuthContextValue | null>(null);
 const TOKEN_KEY = "requests.adminToken";
 
+/** Mantiene sesion de administracion, token JWT y acciones de login/logout. */
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [token, setToken] = useState<string | null>(() => localStorage.getItem(TOKEN_KEY));
   const [user, setUser] = useState<AuthUser | null>(null);
@@ -59,6 +60,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
+/** Accede al contexto de autenticacion interna. */
 export function useAuth() {
   const value = useContext(AuthContext);
   if (!value) throw new Error("useAuth debe usarse dentro de AuthProvider");

@@ -14,25 +14,30 @@ import { recordValue } from "../../utils/record";
 
 const finalStatusCodes = new Set(["REJECTED", "DELIVERED", "CANCELLED"]);
 
+/** Normaliza valores desconocidos a arreglos de registros. */
 function asRecords(value: unknown) {
   return Array.isArray(value) ? (value as Array<Record<string, unknown>>) : [];
 }
 
+/** Lee texto de registros camelCase/PascalCase con fallback. */
 function text(record: Record<string, unknown>, camelKey: string, pascalKey: string, fallback = "-") {
   return recordValue<string>(record, camelKey, pascalKey, fallback) || fallback;
 }
 
+/** Formatea cantidades visibles del detalle de empleado. */
 function numberText(record: Record<string, unknown>, camelKey: string, pascalKey: string) {
   const value = recordValue<number | string | null>(record, camelKey, pascalKey, null);
   return value === null || value === undefined ? "-" : Number(value).toLocaleString();
 }
 
+/** Formatea fechas del detalle de empleado. */
 function dateText(value: unknown) {
   if (!value) return "-";
   const date = new Date(String(value));
   return Number.isNaN(date.getTime()) ? String(value) : date.toLocaleString();
 }
 
+/** Muestra detalle de requisicion del empleado, cancelacion y comentarios. */
 export function EmployeeRequisitionDetailPage() {
   const { id = "" } = useParams();
   const { employeeToken } = useEmployee();
@@ -45,6 +50,7 @@ export function EmployeeRequisitionDetailPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
 
+  /** Recarga detalle y comentarios de la requisicion del empleado. */
   const loadDetail = useCallback(() => {
     if (!employeeToken || !id) {
       setIsLoading(false);
@@ -123,6 +129,7 @@ export function EmployeeRequisitionDetailPage() {
     );
   }
 
+  /** Solicita motivo y cancela la requisicion si aun no esta finalizada. */
   async function cancel() {
     setError("");
     setNotice("");
@@ -140,6 +147,7 @@ export function EmployeeRequisitionDetailPage() {
     }
   }
 
+  /** Agrega comentario del empleado al hilo de la requisicion. */
   async function addComment(event: FormEvent) {
     event.preventDefault();
     setError("");

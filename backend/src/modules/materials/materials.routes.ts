@@ -14,8 +14,10 @@ const materialSchema = z.object({
 export const materialsRouter = Router();
 export const adminMaterialsRouter = Router();
 
+// Catalogo publico para empleados.
 materialsRouter.get("/", materialsController.listPublic);
 
+// Catalogo administrativo para Admin y Compras.
 adminMaterialsRouter.use(authenticateInternal);
 adminMaterialsRouter.get("/", materialsController.listAdmin);
 adminMaterialsRouter.post("/", requireRole("Admin", "Compras"), validate(materialSchema), materialsController.create);
