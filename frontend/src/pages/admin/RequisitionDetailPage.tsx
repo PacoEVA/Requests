@@ -155,6 +155,8 @@ export function RequisitionDetailPage() {
   const detail = (requisition ?? {}) as Record<string, unknown>;
   const currentStatus = text(detail, "statusName", "StatusName", "Pendiente");
   const currentStatusCode = text(detail, "statusCode", "StatusCode", "PENDING");
+  const currentDepartmentName = text(detail, "departmentName", "DepartmentName", "");
+  const currentDepartmentId = Number(detail.DepartmentId ?? detail.departmentId ?? 0);
   const isFinal = finalStatusCodes.has(currentStatusCode);
   const items = useMemo(() => asRecords(requisition?.items), [requisition]);
   const history = useMemo(() => asRecords(requisition?.history), [requisition]);
@@ -172,7 +174,6 @@ export function RequisitionDetailPage() {
   useEffect(() => {
     const nextApproved: Record<number, string> = {};
     const nextDelivered: Record<number, string> = {};
-
     for (const item of items) {
       const itemId = Number(item.Id ?? item.id ?? 0);
       if (!itemId) continue;
@@ -401,6 +402,7 @@ export function RequisitionDetailPage() {
                 <thead>
                   <tr>
                     <th>Material</th>
+                    <th>ItemCode</th>
                     <th>Solicitado</th>
                     <th>Aprobado</th>
                     <th>Entregado</th>
@@ -421,6 +423,14 @@ export function RequisitionDetailPage() {
                             "ManualMaterialName",
                             "Material",
                           ),
+                        )}
+                      </td>
+                      <td>
+                        {text(
+                          item,
+                          "materialItemCode",
+                          "MaterialItemCode",
+                          "No tiene",
                         )}
                       </td>
                       <td>
@@ -544,9 +554,7 @@ export function RequisitionDetailPage() {
                   : null}
               </select>
             </label>
-            {statusCode === "APPROVED" ? (
-              null
-            ) : (
+            {statusCode === "APPROVED" ? null : (
               <label>
                 Motivo
                 <textarea
@@ -611,14 +619,32 @@ export function RequisitionDetailPage() {
                 onChange={(event) => setAssignedToUserId(event.target.value)}
               >
                 <option value="">Seleccione</option>
-                {users.map((user) => {
-                  const userId = Number(user.Id ?? user.id ?? 0);
-                  return (
-                    <option key={userId} value={userId}>
-                      {text(user, "fullName", "FullName", "Usuario")}
-                    </option>
-                  );
-                })}
+                {users
+                  .filter((user) => {
+                    const userDepartmentId = Number(
+                      user.DepartmentId ?? user.departmentId ?? 0,
+                    );
+                    const userDepartmentName = text(
+                      user,
+                      "departmentName",
+                      "DepartmentName",
+                      "",
+                    );
+
+                    return (
+                      currentDepartmentId > 0
+                        ? userDepartmentId === currentDepartmentId
+                        : userDepartmentName === currentDepartmentName
+                    );
+                  })
+                  .map((user) => {
+                    const userId = Number(user.Id ?? user.id ?? 0);
+                    return (
+                      <option key={userId} value={userId}>
+                        {text(user, "fullName", "FullName", "Usuario")}
+                      </option>
+                    );
+                  })}
               </select>
             </label>
             <button
@@ -699,7 +725,11 @@ export function RequisitionDetailPage() {
                 rows={4}
               />
             </label>
-            <button className="secondary-button" type="submit">
+            <button
+              className="secondary-button"
+              disabled={isFinal}
+              type="submit"
+            >
               <MessageSquare size={18} /> Agregar comentario
             </button>
           </form>

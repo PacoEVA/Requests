@@ -617,14 +617,21 @@ export class RequisitionsRepository {
         return null;
       }
 
+      const nombreSupervisor = await new sql.Request(transaction)
+        .input("Id", sql.Int, assignedToUserId)
+        .query(`
+          SELECT FullName FROM InternalUsers WHERE Id = @Id
+        `);
+
       await new sql.Request(transaction)
         .input("Id", sql.Int, requisitionId)
         .input("PerformedByUserId", sql.Int, performedByUserId)
+        .input("AssignedToUserName", sql.NVarChar(150), nombreSupervisor.recordset[0]?.FullName ?? "Usuario Interno")
         .query(`
           INSERT INTO RequisitionHistory
             (RequisitionId, Action, PerformedByType, InternalUserId, Notes)
           VALUES
-            (@Id, 'ASSIGNED', 'INTERNAL_USER', @PerformedByUserId, 'Responsable asignado')
+            (@Id, 'ASSIGNED', 'INTERNAL_USER', @PerformedByUserId, 'Responsable asignado: ' + @AssignedToUserName)
         `);
 
       await transaction.commit();

@@ -240,9 +240,14 @@ export function EmployeeRequisitionDetailPage() {
         </div>
 
         <aside className="side-panel">
-          <button className="danger-button" type="button" disabled={isFinal} onClick={cancel}>
-            <XCircle size={18} /> Cancelar requisicion
-          </button>
+          {
+            isFinal ? null : 
+            (
+              <button className="secondary-button" onClick={cancel}>
+                <XCircle size={18} /> Cancelar requisicion
+              </button>
+            )   
+          }
           {isFinal ? <p className="form-hint">Esta requisicion esta finalizada.</p> : null}
 
           <form className="panel-form" onSubmit={addComment}>
@@ -263,7 +268,7 @@ export function EmployeeRequisitionDetailPage() {
               Mensaje
               <textarea value={comment} onChange={(event) => setComment(event.target.value)} rows={4} />
             </label>
-            <button className="secondary-button" type="submit">
+            <button className="secondary-button" disabled={isFinal} type="submit">
               <MessageSquare size={18} /> Agregar comentario
             </button>
           </form>
