@@ -11,5 +11,5 @@ export function HomeRedirect() {
     return <Navigate to={user?.requirePasswordChange ? "/admin/change-password-required" : "/admin/dashboard"} replace />;
   }
 
-  return <Navigate to={employeeToken ? "/employee" : "/employee/identify"} replace />;
+  return <Navigate to={employeeToken ? "/employee" : "/employee/login"} replace />;
 }

@@ -10,8 +10,9 @@ IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'IX_Requisitions_EmployeeI
 IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'IX_Requisitions_CreatedAt' AND object_id = OBJECT_ID('Requisitions'))
   CREATE INDEX IX_Requisitions_CreatedAt ON Requisitions(CreatedAt);
 
-IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'IX_Employees_PublicToken' AND object_id = OBJECT_ID('Employees'))
-  CREATE INDEX IX_Employees_PublicToken ON Employees(PublicToken);
+IF COL_LENGTH(N'dbo.Employees', N'PublicToken') IS NOT NULL
+AND NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'IX_Employees_PublicToken' AND object_id = OBJECT_ID('Employees'))
+  EXEC(N'CREATE INDEX IX_Employees_PublicToken ON Employees(PublicToken);');
 
 IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'IX_Materials_Name' AND object_id = OBJECT_ID('Materials'))
   CREATE INDEX IX_Materials_Name ON Materials(Name);

@@ -1,6 +1,7 @@
 export type RoleName = "Admin" | "Compras" | "Supervisor";
 
 export interface AuthenticatedUser {
+  kind: "internal";
   sub: number;
   id: number;
   username: string;
@@ -23,5 +24,5 @@ export interface InternalUserRecord {
 
 export interface LoginResponse {
   token: string;
-  user: Omit<AuthenticatedUser, "sub">;
+  user: Omit<AuthenticatedUser, "sub" | "kind">;
 }

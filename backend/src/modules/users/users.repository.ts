@@ -107,6 +107,32 @@ export class UsersRepository {
         WHERE Id = @Id
       `);
   }
+
+  async getById(id: number) {
+    const pool = await getDbPool();
+    const result = await pool
+      .request()
+      .input("Id", sql.Int, id)
+      .query(`
+        SELECT
+          U.Id,
+          U.Username,
+          U.FullName,
+          U.DepartmentId,
+          U.IsActive,
+          U.RequirePasswordChange,
+          U.LastLoginAt,
+          R.Name AS RoleName,
+          D.Name AS DepartmentName
+        FROM InternalUsers U
+        INNER JOIN Roles R ON U.RoleId = R.Id
+        LEFT JOIN Departments D ON U.DepartmentId = D.Id
+        WHERE U.Id = @Id
+      `);
+      
+    return result.recordset[0] || null;
+  }
+
 }
 
 export const usersRepository = new UsersRepository();

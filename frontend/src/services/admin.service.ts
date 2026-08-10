@@ -70,5 +70,16 @@ export const adminService = {
       method: "PATCH",
       token
     });
+  },
+  /** Lista cuentas de empleados y su estado de acceso. */
+  employeeAccounts(token: string) {
+    return apiRequest<{ employees: unknown[] }>("/admin/employees", { token });
+  },
+  /** Habilita o inhabilita el acceso de una cuenta de empleado. */
+  setEmployeeActive(token: string, employeeId: number, isActive: boolean) {
+    return apiRequest<{ ok: boolean }>(`/admin/employees/${employeeId}/${isActive ? "activate" : "deactivate"}`, {
+      method: "PATCH",
+      token
+    });
   }
 };

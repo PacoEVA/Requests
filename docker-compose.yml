@@ -9,6 +9,8 @@ services:
       NODE_ENV: production
       PORT: 5001
       CLIENT_ORIGIN: ${CLIENT_ORIGIN:-http://10.0.0.54:9090}
+      EMAIL_API_KEY: ${EMAIL_API_KEY:-H*SDahkkkosdfh0a-8asd12313231858ajadsncclvjASJD123912391asdDAsd8@71q231298}
+      EMAIL_SERVICE_URL: ${EMAIL_SERVICE_URL:-http://email:8034}
       CLIENT_ORIGINS: ${CLIENT_ORIGINS:-http://10.0.0.54:9090,http://localhost:9090,http://127.0.0.1:9090}
       JWT_SECRET: ${JWT_SECRET}
       JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-8h}
@@ -29,6 +31,19 @@ services:
       timeout: 5s
       retries: 5
       start_period: 20s
+    
+  email:
+    build:
+      context: .
+      dockerfile: email/DockerFile
+    container_name: requests-email
+    restart: unless-stopped
+    environment:
+      SMTP_HOST: ${SMTP_HOST}
+      SMTP_PORT: ${SMTP_PORT}
+      SMTP_USER: ${SMTP_USER}
+      SMTP_PASS: ${SMTP_PASS}
+      EMAIL_API_KEY: ${EMAIL_API_KEY:-H*SDahkkkosdfh0a-8asd12313231858ajadsncclvjASJD123912391asdDAsd8@71q231298}
 
   frontend:
     build:

@@ -8,6 +8,7 @@ import type { AuthenticatedUser, InternalUserRecord, LoginResponse } from "./aut
 /** Reduce el registro de base de datos a los campos que viajan dentro del JWT. */
 function toTokenUser(user: InternalUserRecord): AuthenticatedUser {
   return {
+    kind: "internal",
     sub: user.id,
     id: user.id,
     username: user.username,

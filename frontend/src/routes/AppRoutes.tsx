@@ -1,4 +1,4 @@
-import { Route, Routes } from "react-router-dom";
+import { Navigate, Route, Routes } from "react-router-dom";
 import { AdminShell } from "../components/admin/AdminShell";
 import { EmployeeShell } from "../components/employee/EmployeeShell";
 import { AdminProtectedRoute, AdminRoleRoute, EmployeeProtectedRoute } from "./ProtectedRoute";
@@ -24,7 +24,9 @@ export function AppRoutes() {
   return (
     <Routes>
       <Route path="/" element={<HomeRedirect />} />
-      <Route path="/employee/identify" element={<EmployeeIdentifyPage />} />
+      <Route path="/employee/login" element={<EmployeeIdentifyPage />} />
+      <Route path="/employee/register" element={<EmployeeIdentifyPage />} />
+      <Route path="/employee/identify" element={<Navigate to="/employee/login" replace />} />
       <Route element={<EmployeeProtectedRoute />}>
         <Route element={<EmployeeShell />}>
           <Route path="/employee" element={<EmployeeHomePage />} />

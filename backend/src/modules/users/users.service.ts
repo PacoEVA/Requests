@@ -37,6 +37,11 @@ export class UsersService {
       requirePasswordChange: true
     };
   }
+
+  /** Devuelve datos de usuario interno por id. */
+  async getById(id: number) {
+    return usersRepository.getById(id);
+  }
 }
 
 export const usersService = new UsersService();

@@ -65,6 +65,7 @@ export class UsersController {
       next(error);
     }
   };
+
 }
 
 export const usersController = new UsersController();

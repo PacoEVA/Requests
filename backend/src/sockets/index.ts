@@ -37,11 +37,13 @@ export function configureSockets(httpServer: HttpServer) {
       try {
         if (!token) throw new Error("token requerido");
         const user = jwt.verify(token, env.JWT_SECRET) as unknown as AuthenticatedUser;
+        if (user.kind && user.kind !== "internal") throw new Error("tipo de token incorrecto");
         const currentUser = await authRepository.findById(user.id);
         if (!currentUser?.isActive) throw new Error("usuario inactivo");
 
         const socketUser: AuthenticatedUser = {
           ...user,
+          kind: "internal",
           role: currentUser.role,
           departmentId: currentUser.departmentId,
           fullName: currentUser.fullName,
@@ -75,11 +77,13 @@ export function configureSockets(httpServer: HttpServer) {
 
         if (!socket.data.user && token) {
           const user = jwt.verify(token, env.JWT_SECRET) as unknown as AuthenticatedUser;
+          if (user.kind && user.kind !== "internal") throw new Error("tipo de token incorrecto");
           const currentUser = await authRepository.findById(user.id);
           if (!currentUser?.isActive) throw new Error("usuario inactivo");
 
           const socketUser: AuthenticatedUser = {
             ...user,
+            kind: "internal",
             role: currentUser.role,
             departmentId: currentUser.departmentId,
             fullName: currentUser.fullName,

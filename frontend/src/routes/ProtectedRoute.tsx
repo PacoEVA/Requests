@@ -30,13 +30,13 @@ export function AdminRoleRoute({ roles }: { roles: RoleName[] }) {
   return <Outlet />;
 }
 
-/** Protege rutas de empleado que requieren token publico identificado. */
+/** Protege rutas de empleado que requieren una sesion autenticada. */
 export function EmployeeProtectedRoute() {
   const { employeeToken } = useEmployee();
   const location = useLocation();
 
   if (!employeeToken) {
-    return <Navigate to="/employee/identify" replace state={{ from: location }} />;
+    return <Navigate to="/employee/login" replace state={{ from: location }} />;
   }
 
   return <Outlet />;

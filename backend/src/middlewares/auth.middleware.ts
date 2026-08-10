@@ -1,11 +1,12 @@
 import type { RequestHandler } from "express";
-import jwt from "jsonwebtoken";
+import jwt, { type JwtPayload } from "jsonwebtoken";
 import { env } from "../config/env";
+import { authRepository } from "../modules/auth/auth.repository";
 import type { AuthenticatedUser, RoleName } from "../modules/auth/auth.types";
 import { AppError } from "./error.middleware";
 
-/** Valida el JWT de usuarios internos y lo adjunta a req.user. */
-export const authenticateInternal: RequestHandler = (req, _res, next) => {
+/** Valida el JWT interno y refresca rol/estado desde DB en cada peticion. */
+export const authenticateInternal: RequestHandler = async (req, _res, next) => {
   const header = req.headers.authorization;
   const token = header?.startsWith("Bearer ") ? header.slice("Bearer ".length) : null;
 
@@ -15,10 +16,32 @@ export const authenticateInternal: RequestHandler = (req, _res, next) => {
   }
 
   try {
-    req.user = jwt.verify(token, env.JWT_SECRET) as unknown as AuthenticatedUser;
+    const payload = jwt.verify(token, env.JWT_SECRET) as JwtPayload & { kind?: string; id?: number };
+
+    // Se aceptan temporalmente JWT internos antiguos sin kind hasta que expiren.
+    if (payload.kind && payload.kind !== "internal") {
+      throw new Error("tipo de token incorrecto");
+    }
+
+    const id = Number(payload.id);
+    if (!Number.isInteger(id) || id <= 0) throw new Error("id invalido");
+
+    const currentUser = await authRepository.findById(id);
+    if (!currentUser?.isActive) throw new Error("usuario inactivo");
+
+    req.user = {
+      kind: "internal",
+      sub: currentUser.id,
+      id: currentUser.id,
+      username: currentUser.username,
+      fullName: currentUser.fullName,
+      role: currentUser.role,
+      departmentId: currentUser.departmentId,
+      requirePasswordChange: currentUser.requirePasswordChange
+    } satisfies AuthenticatedUser;
     next();
   } catch {
-    next(new AppError("Token inválido", 401, "INVALID_TOKEN"));
+    next(new AppError("Token inválido o usuario inactivo", 401, "INVALID_TOKEN"));
   }
 };
 

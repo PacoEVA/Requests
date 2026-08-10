@@ -1,11 +1,16 @@
 import type { RequestHandler } from "express";
 import { AppError } from "../../middlewares/error.middleware";
 import { requisitionsService } from "./requisitions.service";
+import { buildEmailHtml } from "../../utils/email-templates";
+import { sendEmail } from "../../utils/send-email";
+import { employeesService } from "../employees/employees.service";
+import { usersService } from "../users/users.service";
 
 /** Valida y convierte parametros id de requisicion. */
 function numericId(value: string | undefined) {
   const id = Number(value);
-  if (!Number.isInteger(id) || id <= 0) throw new AppError("Id inválido", 400, "INVALID_ID");
+  if (!Number.isInteger(id) || id <= 0)
+    throw new AppError("Id inválido", 400, "INVALID_ID");
   return id;
 }
 
@@ -13,8 +18,16 @@ export class RequisitionsController {
   /** Crea una requisicion desde la identidad del empleado. */
   create: RequestHandler = async (req, res, next) => {
     try {
-      if (!req.employee) throw new AppError("Empleado no identificado", 401, "EMPLOYEE_REQUIRED");
-      const requisition = await requisitionsService.create(req.employee, req.body);
+      if (!req.employee)
+        throw new AppError(
+          "Empleado no identificado",
+          401,
+          "EMPLOYEE_REQUIRED",
+        );
+      const requisition = await requisitionsService.create(
+        req.employee,
+        req.body,
+      );
       res.status(201).json({ requisition });
     } catch (error) {
       next(error);
@@ -24,8 +37,16 @@ export class RequisitionsController {
   /** Lista requisiciones propias del empleado autenticado. */
   listMine: RequestHandler = async (req, res, next) => {
     try {
-      if (!req.employee) throw new AppError("Empleado no identificado", 401, "EMPLOYEE_REQUIRED");
-      const requisitions = await requisitionsService.listMine(req.employee, req.query);
+      if (!req.employee)
+        throw new AppError(
+          "Empleado no identificado",
+          401,
+          "EMPLOYEE_REQUIRED",
+        );
+      const requisitions = await requisitionsService.listMine(
+        req.employee,
+        req.query,
+      );
       res.json({ requisitions });
     } catch (error) {
       next(error);
@@ -35,8 +56,16 @@ export class RequisitionsController {
   /** Devuelve el detalle de una requisicion del empleado autenticado. */
   getMine: RequestHandler = async (req, res, next) => {
     try {
-      if (!req.employee) throw new AppError("Empleado no identificado", 401, "EMPLOYEE_REQUIRED");
-      const requisition = await requisitionsService.getMine(req.employee, numericId(req.params.id));
+      if (!req.employee)
+        throw new AppError(
+          "Empleado no identificado",
+          401,
+          "EMPLOYEE_REQUIRED",
+        );
+      const requisition = await requisitionsService.getMine(
+        req.employee,
+        numericId(req.params.id),
+      );
       res.json({ requisition });
     } catch (error) {
       next(error);
@@ -46,8 +75,17 @@ export class RequisitionsController {
   /** Cancela una requisicion propia indicando motivo. */
   cancelMine: RequestHandler = async (req, res, next) => {
     try {
-      if (!req.employee) throw new AppError("Empleado no identificado", 401, "EMPLOYEE_REQUIRED");
-      const requisition = await requisitionsService.cancelMine(req.employee, numericId(req.params.id), req.body.reason);
+      if (!req.employee)
+        throw new AppError(
+          "Empleado no identificado",
+          401,
+          "EMPLOYEE_REQUIRED",
+        );
+      const requisition = await requisitionsService.cancelMine(
+        req.employee,
+        numericId(req.params.id),
+        req.body.reason,
+      );
       res.json({ ok: true, requisition });
     } catch (error) {
       next(error);
@@ -57,8 +95,12 @@ export class RequisitionsController {
   /** Lista requisiciones visibles para el usuario interno. */
   listAdmin: RequestHandler = async (req, res, next) => {
     try {
-      if (!req.user) throw new AppError("Usuario no autenticado", 401, "AUTH_REQUIRED");
-      const requisitions = await requisitionsService.listAdmin(req.user, req.query);
+      if (!req.user)
+        throw new AppError("Usuario no autenticado", 401, "AUTH_REQUIRED");
+      const requisitions = await requisitionsService.listAdmin(
+        req.user,
+        req.query,
+      );
       res.json({ requisitions });
     } catch (error) {
       next(error);
@@ -68,8 +110,12 @@ export class RequisitionsController {
   /** Devuelve detalle de requisicion para administracion. */
   getAdmin: RequestHandler = async (req, res, next) => {
     try {
-      if (!req.user) throw new AppError("Usuario no autenticado", 401, "AUTH_REQUIRED");
-      const requisition = await requisitionsService.getAdmin(req.user, numericId(req.params.id));
+      if (!req.user)
+        throw new AppError("Usuario no autenticado", 401, "AUTH_REQUIRED");
+      const requisition = await requisitionsService.getAdmin(
+        req.user,
+        numericId(req.params.id),
+      );
       res.json({ requisition });
     } catch (error) {
       next(error);
@@ -79,8 +125,48 @@ export class RequisitionsController {
   /** Cambia estado y cantidades aprobadas segun reglas de negocio. */
   updateStatus: RequestHandler = async (req, res, next) => {
     try {
-      if (!req.user) throw new AppError("Usuario no autenticado", 401, "AUTH_REQUIRED");
-      const requisition = await requisitionsService.updateStatus(req.user, numericId(req.params.id), req.body);
+      if (!req.user)
+        throw new AppError("Usuario no autenticado", 401, "AUTH_REQUIRED");
+
+      const requisition = await requisitionsService.updateStatus(
+        req.user,
+        numericId(req.params.id),
+        req.body,
+      );
+
+      const usuario = await employeesService.getById(requisition.history[0].EmployeeId as number);
+      const AdminUser = await usersService.getById(req.user.id);
+      const details = [
+        { label: "Aprobada por:", value: AdminUser?.FullName || "Desconocido" },
+        {}
+      ];
+
+      if(requisition && usuario && usuario.email) {
+        // Enviar notificacion por correo dependiendo el estado
+        switch (req.body.statusCode) {
+          case "APPROVED":
+            const email = await sendEmail({
+              to: usuario.email as string ,
+              subject: "Requisición Aprobada",
+              html: buildEmailHtml({
+                title: "Requisición Aprobada",
+                subtitle: "Tu requisición ha sido aprobada.",
+                heading: "Aprobación de Requisición",
+                status: "approved",
+                message: "Tu requisición ha sido aprobada y está lista para ser procesada.",
+                details: [
+                  { label: "Aprobada por:", value: AdminUser?.FullName || "Desconocido" },
+                ],
+                ctaLabel: "Ver Requisición",
+                ctaUrl: `https://10.0.0.54:9090/employee/requisitions/${numericId(req.params.id)}`,
+              }),
+            });
+
+            break;
+          // Agregar más casos según los estados que quieras manejar
+        }
+      }
+
       res.json({ ok: true, requisition });
     } catch (error) {
       next(error);
@@ -90,8 +176,13 @@ export class RequisitionsController {
   /** Asigna una requisicion a un usuario interno responsable. */
   assign: RequestHandler = async (req, res, next) => {
     try {
-      if (!req.user) throw new AppError("Usuario no autenticado", 401, "AUTH_REQUIRED");
-      const requisition = await requisitionsService.assign(req.user, numericId(req.params.id), req.body.assignedToUserId);
+      if (!req.user)
+        throw new AppError("Usuario no autenticado", 401, "AUTH_REQUIRED");
+      const requisition = await requisitionsService.assign(
+        req.user,
+        numericId(req.params.id),
+        req.body.assignedToUserId,
+      );
       res.json({ ok: true, requisition });
     } catch (error) {
       next(error);
@@ -101,8 +192,13 @@ export class RequisitionsController {
   /** Registra entregas parciales o totales de lineas aprobadas. */
   deliver: RequestHandler = async (req, res, next) => {
     try {
-      if (!req.user) throw new AppError("Usuario no autenticado", 401, "AUTH_REQUIRED");
-      const requisition = await requisitionsService.deliver(req.user, numericId(req.params.id), req.body);
+      if (!req.user)
+        throw new AppError("Usuario no autenticado", 401, "AUTH_REQUIRED");
+      const requisition = await requisitionsService.deliver(
+        req.user,
+        numericId(req.params.id),
+        req.body,
+      );
       res.json({ ok: true, requisition });
     } catch (error) {
       next(error);
@@ -114,12 +210,19 @@ export class RequisitionsController {
     try {
       const requisitionId = numericId(req.params.id);
       const comments = req.employee
-        ? await requisitionsService.listCommentsForEmployee(req.employee, requisitionId)
+        ? await requisitionsService.listCommentsForEmployee(
+            req.employee,
+            requisitionId,
+          )
         : req.user
-          ? await requisitionsService.listCommentsForAdmin(req.user, requisitionId)
+          ? await requisitionsService.listCommentsForAdmin(
+              req.user,
+              requisitionId,
+            )
           : null;
 
-      if (!comments) throw new AppError("Autenticacion requerida", 401, "AUTH_REQUIRED");
+      if (!comments)
+        throw new AppError("Autenticacion requerida", 401, "AUTH_REQUIRED");
       res.json({ comments });
     } catch (error) {
       next(error);
@@ -131,12 +234,21 @@ export class RequisitionsController {
     try {
       const requisitionId = numericId(req.params.id);
       const comment = req.employee
-        ? await requisitionsService.addEmployeeComment(req.employee, requisitionId, req.body.message)
+        ? await requisitionsService.addEmployeeComment(
+            req.employee,
+            requisitionId,
+            req.body.message,
+          )
         : req.user
-          ? await requisitionsService.addInternalComment(req.user, requisitionId, req.body.message)
+          ? await requisitionsService.addInternalComment(
+              req.user,
+              requisitionId,
+              req.body.message,
+            )
           : null;
 
-      if (!comment) throw new AppError("Autenticación requerida", 401, "AUTH_REQUIRED");
+      if (!comment)
+        throw new AppError("Autenticación requerida", 401, "AUTH_REQUIRED");
       res.status(201).json({ comment });
     } catch (error) {
       next(error);

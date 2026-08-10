@@ -75,7 +75,7 @@ function dateText(value: unknown) {
 /** Gestiona detalle administrativo, estado, asignacion, entregas y comentarios. */
 export function RequisitionDetailPage() {
   const { id = "" } = useParams();
-  const { token } = useAuth();
+  const { token, user } = useAuth();
   const socket = useSocket();
   const [requisition, setRequisition] = useState<RequisitionDetail | null>(
     null,
@@ -157,13 +157,25 @@ export function RequisitionDetailPage() {
   const currentStatusCode = text(detail, "statusCode", "StatusCode", "PENDING");
   const currentDepartmentName = text(detail, "departmentName", "DepartmentName", "");
   const currentDepartmentId = Number(detail.DepartmentId ?? detail.departmentId ?? 0);
+  const isSupervisor = user?.role === "Supervisor";
+  const isAssignedToCurrentSupervisor =
+    isSupervisor &&
+    Number(detail.AssignedToUserId ?? detail.assignedToUserId ?? 0) === Number(user?.id ?? 0);
   const isFinal = finalStatusCodes.has(currentStatusCode);
   const items = useMemo(() => asRecords(requisition?.items), [requisition]);
   const history = useMemo(() => asRecords(requisition?.history), [requisition]);
   const allowedStatusOptions = useMemo(() => {
     const allowedCodes = allowedTransitions[currentStatusCode] ?? [];
-    return statusOptions.filter((option) => allowedCodes.includes(option.code));
-  }, [currentStatusCode]);
+    let options = statusOptions.filter((option) => allowedCodes.includes(option.code));
+
+    if (isSupervisor) {
+      options = isAssignedToCurrentSupervisor
+        ? options.filter((option) => option.code === "APPROVED")
+        : [];
+    }
+
+    return options;
+  }, [currentStatusCode, isAssignedToCurrentSupervisor, isSupervisor]);
 
   useEffect(() => {
     if (allowedStatusOptions[0]) {
@@ -532,14 +544,16 @@ export function RequisitionDetailPage() {
             ) : null}
             {!isFinal && allowedStatusOptions.length === 0 ? (
               <p className="form-hint">
-                No hay cambios de estado directos disponibles desde este estado.
+                {isSupervisor && !isAssignedToCurrentSupervisor
+                  ? "Esta requisicion no esta asignada a usted para aprobarla."
+                  : "No hay cambios de estado directos disponibles desde este estado."}
               </p>
             ) : null}
             <label>
               Estado
               <select
                 value={isFinal ? currentStatusCode : statusCode}
-                disabled={isFinal || allowedStatusOptions.length === 0}
+                disabled={isFinal || allowedStatusOptions.length === 0 || (isSupervisor && !isAssignedToCurrentSupervisor)}
                 onChange={(event) => setStatusCode(event.target.value)}
               >
                 {isFinal ? (
@@ -603,7 +617,7 @@ export function RequisitionDetailPage() {
             <button
               className="primary-button"
               type="submit"
-              disabled={isFinal || allowedStatusOptions.length === 0}
+              disabled={isFinal || allowedStatusOptions.length === 0 || (isSupervisor && !isAssignedToCurrentSupervisor)}
             >
               <Save size={18} /> Guardar estado
             </button>

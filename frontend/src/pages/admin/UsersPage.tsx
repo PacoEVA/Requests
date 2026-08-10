@@ -1,4 +1,4 @@
-import { KeyRound, Plus, UserRound } from "lucide-react";
+import { KeyRound, Plus, UserRound, UsersRound } from "lucide-react";
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import { EmptyState } from "../../components/common/EmptyState";
 import { PageHeader } from "../../components/common/PageHeader";
@@ -12,6 +12,7 @@ import { recordId, recordName, recordValue } from "../../utils/record";
 export function UsersPage() {
   const { token } = useAuth();
   const [users, setUsers] = useState<unknown[]>([]);
+  const [employeeAccounts, setEmployeeAccounts] = useState<unknown[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
   const [temporaryPassword, setTemporaryPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
@@ -24,7 +25,7 @@ export function UsersPage() {
     departmentId: ""
   });
 
-  /** Recarga usuarios internos y departamentos necesarios para el formulario. */
+  /** Recarga usuarios internos, empleados y departamentos del panel. */
   const reload = useCallback(() => {
     if (!token) return;
     adminService
@@ -40,6 +41,13 @@ export function UsersPage() {
       .catch((error) => {
         setDepartments([]);
         setErrorMessage(friendlyErrorMessage(error, "No se pudo cargar el listado de departamentos."));
+      });
+    adminService
+      .employeeAccounts(token)
+      .then((response) => setEmployeeAccounts(response.employees))
+      .catch((error) => {
+        setEmployeeAccounts([]);
+        setErrorMessage(friendlyErrorMessage(error, "No se pudo cargar el listado de empleados."));
       });
   }, [token]);
 
@@ -108,9 +116,20 @@ export function UsersPage() {
     }
   }
 
+  async function toggleEmployeeActive(employeeId: number, isActive: boolean) {
+    if (!token) return;
+    setErrorMessage("");
+    try {
+      await adminService.setEmployeeActive(token, employeeId, !isActive);
+      reload();
+    } catch (error) {
+      setErrorMessage(friendlyErrorMessage(error, "No se pudo cambiar el acceso del empleado."));
+    }
+  }
+
   return (
     <>
-      <PageHeader title="Usuarios internos" eyebrow="Admin" />
+      <PageHeader title="Administración de usuarios" eyebrow="Admin" />
       <section className="stack-layout">
         <form className="surface form-grid" onSubmit={onSubmit}>
           <h2 className="span-2">
@@ -174,7 +193,7 @@ export function UsersPage() {
         </form>
 
         <div className="surface">
-          <h2>Listado</h2>
+          <h2>Usuarios administrativos</h2>
           {users.length === 0 ? (
             <EmptyState title="No hay usuarios internos" message="Cuando cree usuarios, apareceran en este listado." />
           ) : (
@@ -233,6 +252,64 @@ export function UsersPage() {
                 })}
               </tbody>
             </table>
+            </div>
+          )}
+        </div>
+
+        <div className="surface">
+          <h2>
+            <UsersRound size={18} /> Cuentas de empleados
+          </h2>
+          <p className="helper-text">
+            Al inhabilitar una cuenta se cierra su conexión y sus solicitudes posteriores serán rechazadas.
+          </p>
+          {employeeAccounts.length === 0 ? (
+            <EmptyState title="No hay empleados" message="Las cuentas registradas aparecerán en este listado." />
+          ) : (
+            <div className="data-table compact-table">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Usuario</th>
+                    <th>Empleado</th>
+                    <th>Código</th>
+                    <th>Departamento</th>
+                    <th>Correo</th>
+                    <th>Cuenta</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {employeeAccounts.map((employee) => {
+                    const record = employee as Record<string, unknown>;
+                    const id = recordValue<number>(record, "id", "Id", 0);
+                    const isActive = recordValue<boolean>(record, "isActive", "IsActive", true);
+                    const hasCredentials = recordValue<boolean>(record, "hasCredentials", "HasCredentials", false);
+
+                    return (
+                      <tr key={id}>
+                        <td>{recordValue<string>(record, "username", "Usuario", "Pendiente") || "Pendiente"}</td>
+                        <td>{recordValue<string>(record, "name", "Name", "")}</td>
+                        <td>{recordValue<string>(record, "employeeCode", "EmployeeCode", "")}</td>
+                        <td>{recordValue<string>(record, "departmentName", "DepartmentName", "")}</td>
+                        <td>{recordValue<string>(record, "email", "Correo", "") || "Sin correo"}</td>
+                        <td>{hasCredentials ? "Configurada" : "Pendiente de registro"}</td>
+                        <td>{isActive ? "Habilitado" : "Inhabilitado"}</td>
+                        <td>
+                          <button
+                            className="secondary-button small-button"
+                            type="button"
+                            onClick={() => toggleEmployeeActive(id, isActive)}
+                          >
+                            {isActive ? "Inhabilitar" : "Habilitar"}
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
             </div>
           )}
         </div>

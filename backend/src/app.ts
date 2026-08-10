@@ -8,7 +8,7 @@ import { responseMiddleware } from "./middlewares/response.middleware";
 import { authRouter } from "./modules/auth/auth.routes";
 import { dashboardRouter } from "./modules/dashboard/dashboard.routes";
 import { adminDepartmentsRouter, departmentsRouter } from "./modules/departments/departments.routes";
-import { employeesRouter } from "./modules/employees/employees.routes";
+import { adminEmployeesRouter, employeesRouter } from "./modules/employees/employees.routes";
 import { adminMaterialsRouter, materialsRouter } from "./modules/materials/materials.routes";
 import { notificationsRouter } from "./modules/notifications/notifications.routes";
 import { adminRequisitionsRouter, requisitionsRouter } from "./modules/requisitions/requisitions.routes";
@@ -47,6 +47,7 @@ export function createApp() {
 
   app.use("/api/auth", authRouter);
   app.use("/api/employees", employeesRouter);
+  app.use("/api/admin/employees", adminEmployeesRouter);
   app.use("/api/requisitions", requisitionsRouter);
   app.use("/api/admin/requisitions", adminRequisitionsRouter);
   app.use("/api/materials", materialsRouter);

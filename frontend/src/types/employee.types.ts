@@ -1,11 +1,12 @@
 export interface Employee {
   id: number;
-  publicToken: string;
+  username: string;
   name: string;
   departmentId: number;
   departmentName?: string;
   employeeCode?: string | null;
   phoneOrExtension?: string | null;
+  email?: string | null;
 }
 
 export interface Department {

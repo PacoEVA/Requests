@@ -51,6 +51,7 @@ export interface RequisitionMeta {
   code: string;
   employeeId: number;
   departmentId: number;
+  assignedToUserId?: number | null;
   statusCode: string;
   statusName: string;
   statusId: number;

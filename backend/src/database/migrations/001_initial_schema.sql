@@ -9,15 +9,22 @@ CREATE TABLE Departments (
 
 CREATE TABLE Employees (
   Id INT IDENTITY PRIMARY KEY,
-  PublicToken UNIQUEIDENTIFIER NOT NULL DEFAULT NEWID(),
   Name NVARCHAR(150) NOT NULL,
   DepartmentId INT NOT NULL FOREIGN KEY REFERENCES Departments(Id),
-  EmployeeCode NVARCHAR(50) NULL,
-  PhoneOrExtension NVARCHAR(50) NULL,
+  EmployeeCode NVARCHAR(50) NOT NULL,
+  PhoneOrExtension NVARCHAR(50) NOT NULL,
+  Correo NVARCHAR(255) NOT NULL,
+  Usuario NVARCHAR(80) NOT NULL,
+  PasswordHash NVARCHAR(255) NOT NULL,
   IsActive BIT NOT NULL DEFAULT 1,
+  LastLoginAt DATETIME2 NULL,
   CreatedAt DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
   UpdatedAt DATETIME2 NULL
 );
+
+CREATE UNIQUE INDEX UX_Employees_EmployeeCode ON Employees(EmployeeCode);
+CREATE UNIQUE INDEX UX_Employees_Correo ON Employees(Correo);
+CREATE UNIQUE INDEX UX_Employees_Usuario ON Employees(Usuario);
 
 CREATE TABLE Roles (
   Id INT IDENTITY PRIMARY KEY,

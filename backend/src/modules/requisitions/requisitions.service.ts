@@ -62,6 +62,28 @@ function assertManager(user: AuthenticatedUser) {
   }
 }
 
+/** Valida que un supervisor solo pueda aprobar requisiciones de su departamento y asignadas a él. */
+function assertSupervisorStatusAccess(user: AuthenticatedUser, meta: RequisitionMeta, targetStatusCode: string) {
+  if (user.role !== "Supervisor") return;
+
+  const supervisorDepartmentId = Number(user.departmentId ?? 0);
+  if (!supervisorDepartmentId) {
+    throw new AppError("Supervisor sin departamento asignado", 403, "SUPERVISOR_DEPARTMENT_REQUIRED");
+  }
+
+  if (meta.departmentId !== supervisorDepartmentId) {
+    throw new AppError("No tiene permiso para esta requisicion", 403, "FORBIDDEN");
+  }
+
+  if (Number(meta.assignedToUserId ?? 0) !== user.id) {
+    throw new AppError("Esta requisicion no esta asignada a usted", 403, "REQUISITION_NOT_ASSIGNED");
+  }
+
+  if (targetStatusCode !== "APPROVED") {
+    throw new AppError("Solo puede aprobar esta requisicion", 403, "SUPERVISOR_APPROVAL_ONLY");
+  }
+}
+
 /** Devuelve el departamento de supervisor o falla si no tiene uno asignado. */
 function supervisorDepartmentId(user: AuthenticatedUser) {
   if (user.role !== "Supervisor") return null;
@@ -246,7 +268,12 @@ export class RequisitionsService {
 
   /** Actualiza estado y cantidades aprobadas validando reglas de transicion. */
   async updateStatus(user: AuthenticatedUser, id: number, input: StatusChangeInput) {
-    assertManager(user);
+    const meta = assertRequisitionFound(await requisitionsRepository.getMeta(id));
+    if (user.role === "Supervisor") {
+      assertSupervisorStatusAccess(user, meta, input.statusCode);
+    } else {
+      assertManager(user);
+    }
 
     if ((input.statusCode === "REJECTED" || input.statusCode === "CANCELLED") && isBlank(input.reason)) {
       throw new AppError("Debe indicar un motivo", 400, "REASON_REQUIRED");
@@ -256,7 +283,6 @@ export class RequisitionsService {
       throw new AppError("Use el endpoint de entrega para registrar cantidades", 400, "USE_DELIVERY_ENDPOINT");
     }
 
-    const meta = assertRequisitionFound(await requisitionsRepository.getMeta(id));
     assertTransitionAllowed(meta, input.statusCode);
 
     const currentItems = await requisitionsRepository.getItems(id);
@@ -448,8 +474,8 @@ export class RequisitionsService {
     });
 
     await safeEmit((io) => {
-      io.to(`internalUser:${assignedToUserId}`).emit("notification:new", notification);
-      io.to(`internalUser:${assignedToUserId}`).to("dashboard:admins").to(`department:${meta.departmentId}`).emit("requisition:assigned", {
+      io.to(`internalUser:${assignedToUserId}`).to(`department:${meta.departmentId}`).emit("notification:new", notification);
+      io.to(`internalUser:${assignedToUserId}`).to(`department:${meta.departmentId}`).to("dashboard:admins").emit("requisition:assigned", {
         requisitionId: meta.id,
         code,
         assignedToUserId

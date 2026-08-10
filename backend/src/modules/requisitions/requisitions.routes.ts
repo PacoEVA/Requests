@@ -75,7 +75,7 @@ requisitionsRouter.post("/:id/comments", authenticateEmployeeOrInternal, validat
 adminRequisitionsRouter.use(authenticateInternal);
 adminRequisitionsRouter.get("/", requisitionsController.listAdmin);
 adminRequisitionsRouter.get("/:id", requisitionsController.getAdmin);
-adminRequisitionsRouter.patch("/:id/status", requireRole("Admin", "Compras"), validate(statusSchema), requisitionsController.updateStatus);
+adminRequisitionsRouter.patch("/:id/status", requireRole("Admin", "Compras", "Supervisor"), validate(statusSchema), requisitionsController.updateStatus);
 adminRequisitionsRouter.patch("/:id/assign", requireRole("Admin", "Compras"), validate(assignSchema), requisitionsController.assign);
 adminRequisitionsRouter.patch("/:id/deliver", requireRole("Admin", "Compras"), validate(deliverSchema), requisitionsController.deliver);
 adminRequisitionsRouter.get("/:id/comments", requisitionsController.listComments);
