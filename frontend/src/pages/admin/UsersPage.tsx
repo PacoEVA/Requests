@@ -20,6 +20,7 @@ export function UsersPage() {
   const [form, setForm] = useState({
     username: "",
     fullName: "",
+    email: "",
     password: "",
     role: "Compras",
     departmentId: ""
@@ -71,9 +72,34 @@ export function UsersPage() {
       return;
     }
 
+    const normalizedUsername = form.username.trim().toLowerCase();
+    const normalizedEmail = form.email.trim().toLowerCase();
+    const otherUsers = users
+      .map((user) => user as Record<string, unknown>)
+      .filter((user) => recordValue<number>(user, "id", "Id", 0) !== editingId);
+
+    if (
+      otherUsers.some(
+        (user) => recordValue<string>(user, "username", "Username", "").trim().toLowerCase() === normalizedUsername
+      )
+    ) {
+      setErrorMessage("El nombre de usuario ya esta registrado.");
+      return;
+    }
+
+    if (
+      otherUsers.some(
+        (user) => recordValue<string>(user, "email", "Correo", "").trim().toLowerCase() === normalizedEmail
+      )
+    ) {
+      setErrorMessage("El correo ya esta registrado.");
+      return;
+    }
+
     const payload = {
-      username: form.username,
+      username: form.username.trim(),
       fullName: form.fullName,
+      email: normalizedEmail,
       role: form.role,
       departmentId: isSupervisor && form.departmentId ? Number(form.departmentId) : undefined
     };
@@ -89,7 +115,7 @@ export function UsersPage() {
       return;
     }
 
-    setForm({ username: "", fullName: "", password: "", role: "Compras", departmentId: "" });
+    setForm({ username: "", fullName: "", email: "", password: "", role: "Compras", departmentId: "" });
     setEditingId(null);
     reload();
   }
@@ -142,6 +168,15 @@ export function UsersPage() {
           <label>
             Nombre
             <input required value={form.fullName} onChange={(event) => setForm({ ...form, fullName: event.target.value })} />
+          </label>
+          <label>
+            Correo
+            <input
+              required
+              type="email"
+              value={form.email}
+              onChange={(event) => setForm({ ...form, email: event.target.value })}
+            />
           </label>
           {!editingId ? (
             <label>
@@ -203,6 +238,7 @@ export function UsersPage() {
                 <tr>
                   <th>Usuario</th>
                   <th>Nombre</th>
+                  <th>Correo</th>
                   <th>Rol</th>
                   <th>Departamento</th>
                   <th>Activo</th>
@@ -218,6 +254,7 @@ export function UsersPage() {
                     <tr key={id}>
                       <td>{recordValue<string>(record, "username", "Username", "")}</td>
                       <td>{recordValue<string>(record, "fullName", "FullName", "")}</td>
+                      <td>{recordValue<string>(record, "email", "Correo", "") || "Sin correo"}</td>
                       <td>{recordValue<string>(record, "roleName", "RoleName", "")}</td>
                       <td>{recordValue<string>(record, "departmentName", "DepartmentName", "")}</td>
                       <td>{isActive ? "Si" : "No"}</td>
@@ -231,6 +268,7 @@ export function UsersPage() {
                               setForm({
                                 username: recordValue<string>(record, "username", "Username", ""),
                                 fullName: recordValue<string>(record, "fullName", "FullName", ""),
+                                email: recordValue<string>(record, "email", "Correo", ""),
                                 password: "",
                                 role: recordValue<string>(record, "roleName", "RoleName", "Compras"),
                                 departmentId: String(recordValue<number | string>(record, "departmentId", "DepartmentId", ""))

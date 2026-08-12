@@ -14,6 +14,7 @@ import { humanizeHistoryNotes, humanizeHistoryTitle } from "../../utils/requisit
 import { recordValue } from "../../utils/record";
 
 const finalStatusCodes = new Set(["REJECTED", "DELIVERED", "CANCELLED"]);
+const commentRequiredStatusCodes = new Set(["APPROVED", "CANCELLED", "READY_TO_DELIVER"]);
 
 const statusOptions = [
   { code: "IN_REVIEW", label: "En revision" },
@@ -88,6 +89,7 @@ export function RequisitionDetailPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
   const [assignedToUserId, setAssignedToUserId] = useState("");
+  const [assignmentComment, setAssignmentComment] = useState("");
   const [approvedQuantities, setApprovedQuantities] = useState<
     Record<number, string>
   >({});
@@ -240,6 +242,10 @@ export function RequisitionDetailPage() {
     setNotice("");
 
     if (!token || isFinal || allowedStatusOptions.length === 0) return;
+    if (commentRequiredStatusCodes.has(statusCode) && !reason.trim()) {
+      setError("Debe incluir el comentario del administrador o supervisor.");
+      return;
+    }
 
     try {
       const approvalItems =
@@ -284,9 +290,14 @@ export function RequisitionDetailPage() {
     setNotice("");
 
     if (!token || !assignedToUserId) return;
+    if (!assignmentComment.trim()) {
+      setError("Debe incluir el comentario para el supervisor.");
+      return;
+    }
 
     try {
-      await requisitionService.assign(token, id, Number(assignedToUserId));
+      await requisitionService.assign(token, id, Number(assignedToUserId), assignmentComment.trim());
+      setAssignmentComment("");
       setNotice("Responsable asignado.");
       loadDetail();
     } catch (requestError) {
@@ -568,17 +579,17 @@ export function RequisitionDetailPage() {
                   : null}
               </select>
             </label>
-            {statusCode === "APPROVED" ? null : (
-              <label>
-                Motivo
-                <textarea
-                  value={reason}
-                  disabled={isFinal || allowedStatusOptions.length === 0}
-                  onChange={(event) => setReason(event.target.value)}
-                  rows={4}
-                />
-              </label>
-            )}
+            <label>
+              Comentario del administrador o supervisor
+              <textarea
+                required={commentRequiredStatusCodes.has(statusCode)}
+                value={reason}
+                disabled={isFinal || allowedStatusOptions.length === 0}
+                onChange={(event) => setReason(event.target.value)}
+                rows={4}
+                placeholder="Incluya el contexto que recibira el destinatario por correo"
+              />
+            </label>
             {statusCode === "APPROVED" && !isFinal ? (
               <div className="mini-lines">
                 <strong>Cantidades aprobadas</strong>
@@ -635,6 +646,8 @@ export function RequisitionDetailPage() {
                 <option value="">Seleccione</option>
                 {users
                   .filter((user) => {
+                    const roleName = text(user, "roleName", "RoleName", "");
+                    const isActive = Boolean(user.IsActive ?? user.isActive ?? true);
                     const userDepartmentId = Number(
                       user.DepartmentId ?? user.departmentId ?? 0,
                     );
@@ -645,7 +658,7 @@ export function RequisitionDetailPage() {
                       "",
                     );
 
-                    return (
+                    return roleName === "Supervisor" && isActive && (
                       currentDepartmentId > 0
                         ? userDepartmentId === currentDepartmentId
                         : userDepartmentName === currentDepartmentName
@@ -660,6 +673,16 @@ export function RequisitionDetailPage() {
                     );
                   })}
               </select>
+            </label>
+            <label>
+              Comentario para el supervisor
+              <textarea
+                required
+                rows={4}
+                value={assignmentComment}
+                disabled={isFinal}
+                onChange={(event) => setAssignmentComment(event.target.value)}
+              />
             </label>
             <button
               className="secondary-button"

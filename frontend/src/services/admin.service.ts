@@ -36,7 +36,7 @@ export const adminService = {
   /** Crea un usuario interno. */
   createUser(
     token: string,
-    payload: { username: string; fullName: string; password: string; role: string; departmentId?: number }
+    payload: { username: string; fullName: string; email: string; password: string; role: string; departmentId?: number }
   ) {
     return apiRequest<{ user: unknown }>("/admin/users", {
       method: "POST",
@@ -56,7 +56,7 @@ export const adminService = {
   updateUser(
     token: string,
     id: number,
-    payload: { username: string; fullName: string; role: string; departmentId?: number }
+    payload: { username: string; fullName: string; email: string; role: string; departmentId?: number }
   ) {
     return apiRequest<{ user: unknown }>(`/admin/users/${id}`, {
       method: "PUT",

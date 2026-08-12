@@ -3,8 +3,10 @@ import type { AuthenticatedUser, RoleName } from "../auth/auth.types";
 import { dashboardService } from "../dashboard/dashboard.service";
 import type { EmployeeSession } from "../employees/employees.types";
 import { notificationsService } from "../notifications/notifications.service";
+import { usersService } from "../users/users.service";
 import { safeEmit } from "../../sockets/socket-hub";
 import { requisitionsRepository, type RequisitionItemRecord } from "./requisitions.repository";
+import { requisitionEmailService } from "./requisition-email.service";
 import {
   canStayOrTransition,
   canTransition,
@@ -20,6 +22,7 @@ import type {
 } from "./requisitions.types";
 
 const MANAGER_ROLES = new Set<RoleName>(["Admin", "Compras"]);
+const COMMENT_REQUIRED_STATUS_CODES = new Set(["APPROVED", "CANCELLED", "READY_TO_DELIVER"]);
 
 /** Obtiene un id tolerando columnas SQL PascalCase o payloads camelCase. */
 function recordId(record: Record<string, unknown> | null | undefined) {
@@ -246,7 +249,16 @@ export class RequisitionsService {
     const requisition = await requisitionsRepository.cancelByEmployee(id, employee.id, reason.trim());
     if (!requisition) throw new AppError("No se pudo cancelar la requisicion", 409, "CANCEL_NOT_ALLOWED");
 
-    await runSideEffect(() => this.afterCancelled(meta, requisition, "Empleado cancelo la requisicion"));
+    await runSideEffect(() =>
+      this.afterCancelled(
+        meta,
+        requisition,
+        "Empleado cancelo la requisicion",
+        employee.name,
+        "Comentario del empleado",
+        reason.trim()
+      )
+    );
     return requisition;
   }
 
@@ -279,6 +291,14 @@ export class RequisitionsService {
       throw new AppError("Debe indicar un motivo", 400, "REASON_REQUIRED");
     }
 
+    if (COMMENT_REQUIRED_STATUS_CODES.has(input.statusCode) && isBlank(input.reason)) {
+      throw new AppError(
+        "Debe incluir el comentario del administrador o supervisor",
+        400,
+        "COMMENT_REQUIRED"
+      );
+    }
+
     if (input.statusCode === "DELIVERED" || input.statusCode === "PARTIALLY_DELIVERED") {
       throw new AppError("Use el endpoint de entrega para registrar cantidades", 400, "USE_DELIVERY_ENDPOINT");
     }
@@ -291,22 +311,37 @@ export class RequisitionsService {
     const requisition = await requisitionsRepository.updateStatus(id, user.id, input, meta.statusId);
     if (!requisition) throw new AppError("No se pudo actualizar el estado", 409, "STATUS_UPDATE_FAILED");
 
-    await runSideEffect(() => this.afterStatusChanged(meta, requisition, input.statusCode));
+    await runSideEffect(() => this.afterStatusChanged(meta, requisition, input, user));
     return requisition;
   }
 
   /** Asigna responsable interno a una requisicion abierta. */
-  async assign(user: AuthenticatedUser, id: number, assignedToUserId: number) {
+  async assign(user: AuthenticatedUser, id: number, assignedToUserId: number, comment: string) {
     assertManager(user);
+    if (isBlank(comment)) {
+      throw new AppError("Debe incluir el comentario del administrador", 400, "COMMENT_REQUIRED");
+    }
+
     const meta = assertRequisitionFound(await requisitionsRepository.getMeta(id));
     if (meta.isFinal || isFinalStatus(meta.statusCode)) {
       throw new AppError("No se puede asignar una requisicion finalizada", 409, "FINAL_STATUS");
     }
 
-    const requisition = await requisitionsRepository.assign(id, assignedToUserId, user.id);
+    const supervisor = await usersService.getById(assignedToUserId);
+    if (!supervisor || !Boolean(supervisor.IsActive)) {
+      throw new AppError("Supervisor no encontrado o inactivo", 404, "SUPERVISOR_NOT_FOUND");
+    }
+    if (String(supervisor.RoleName) !== "Supervisor") {
+      throw new AppError("La requisicion solo puede asignarse a un supervisor", 400, "SUPERVISOR_REQUIRED");
+    }
+    if (Number(supervisor.DepartmentId ?? 0) !== meta.departmentId) {
+      throw new AppError("El supervisor debe pertenecer al departamento de la requisicion", 400, "DEPARTMENT_MISMATCH");
+    }
+
+    const requisition = await requisitionsRepository.assign(id, assignedToUserId, user.id, comment.trim());
     if (!requisition) throw new AppError("Requisicion no encontrada", 404, "REQUISITION_NOT_FOUND");
 
-    await runSideEffect(() => this.afterAssigned(meta, requisition, assignedToUserId));
+    await runSideEffect(() => this.afterAssigned(meta, requisition, supervisor, user, comment.trim()));
     return requisition;
   }
 
@@ -391,7 +426,8 @@ export class RequisitionsService {
 
     await Promise.all([
       this.notifyRole("Admin", requisitionId, "Nueva requisicion", `${code} fue creada`, "REQUISITION_CREATED"),
-      this.notifyRole("Compras", requisitionId, "Nueva requisicion", `${code} fue creada`, "REQUISITION_CREATED")
+      this.notifyRole("Compras", requisitionId, "Nueva requisicion", `${code} fue creada`, "REQUISITION_CREATED"),
+      requisitionEmailService.notifyCreated(requisition)
     ]);
 
     await safeEmit((io) => {
@@ -403,7 +439,13 @@ export class RequisitionsService {
   }
 
   /** Emite avisos y resumenes tras un cambio de estado. */
-  private async afterStatusChanged(meta: RequisitionMeta, requisition: Record<string, unknown>, targetStatusCode: string) {
+  private async afterStatusChanged(
+    meta: RequisitionMeta,
+    requisition: Record<string, unknown>,
+    input: StatusChangeInput,
+    actor: AuthenticatedUser
+  ) {
+    const targetStatusCode = input.statusCode;
     const code = recordCode(requisition) || meta.code;
     const newStatusName = recordText(requisition, "StatusName", targetStatusCode);
     const payload = {
@@ -415,6 +457,19 @@ export class RequisitionsService {
     };
 
     await this.notifyEmployee(meta.employeeId, meta.id, "Estado actualizado", `${code} cambio a ${newStatusName}`, "STATUS_CHANGED");
+
+    if (targetStatusCode === "APPROVED") {
+      await requisitionEmailService.notifyApproved(requisition, actor, input.reason!.trim());
+    } else if (targetStatusCode === "CANCELLED") {
+      await requisitionEmailService.notifyCancelled(
+        requisition,
+        actor.fullName,
+        actor.role === "Supervisor" ? "Comentario del supervisor" : "Comentario del administrador",
+        input.reason!.trim()
+      );
+    } else if (targetStatusCode === "READY_TO_DELIVER") {
+      await requisitionEmailService.notifyReady(requisition, actor, input.reason!.trim());
+    }
 
     await safeEmit((io) => {
       io.to(`employee:${meta.employeeId}`)
@@ -441,10 +496,18 @@ export class RequisitionsService {
   }
 
   /** Notifica cancelaciones hechas por empleado o administracion. */
-  private async afterCancelled(meta: RequisitionMeta, requisition: Record<string, unknown>, message: string) {
+  private async afterCancelled(
+    meta: RequisitionMeta,
+    requisition: Record<string, unknown>,
+    message: string,
+    actorName: string,
+    actorLabel: string,
+    comment: string
+  ) {
     const code = recordCode(requisition) || meta.code;
     await this.notifyRole("Admin", meta.id, "Requisicion cancelada", `${code} fue cancelada`, "REQUISITION_CANCELLED");
     await this.notifyRole("Compras", meta.id, "Requisicion cancelada", `${code} fue cancelada`, "REQUISITION_CANCELLED");
+    await requisitionEmailService.notifyCancelled(requisition, actorName, actorLabel, comment);
 
     await safeEmit((io) => {
       io.to(`employee:${meta.employeeId}`)
@@ -462,7 +525,14 @@ export class RequisitionsService {
   }
 
   /** Notifica asignacion directa al usuario responsable. */
-  private async afterAssigned(meta: RequisitionMeta, requisition: Record<string, unknown>, assignedToUserId: number) {
+  private async afterAssigned(
+    meta: RequisitionMeta,
+    requisition: Record<string, unknown>,
+    supervisor: Record<string, unknown>,
+    actor: AuthenticatedUser,
+    comment: string
+  ) {
+    const assignedToUserId = Number(supervisor.Id ?? supervisor.id ?? 0);
     const code = recordCode(requisition) || meta.code;
     const notification = await notificationsService.create({
       recipientType: "INTERNAL_USER",
@@ -472,6 +542,7 @@ export class RequisitionsService {
       message: `${code} fue asignada a tu usuario`,
       type: "REQUISITION_ASSIGNED"
     });
+    await requisitionEmailService.notifyAssigned(requisition, supervisor, actor, comment);
 
     await safeEmit((io) => {
       io.to(`internalUser:${assignedToUserId}`).to(`department:${meta.departmentId}`).emit("notification:new", notification);

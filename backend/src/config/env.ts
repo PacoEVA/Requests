@@ -28,6 +28,7 @@ const envSchema = z.object({
   PORT: numberFromEnv(4000),
   CLIENT_ORIGIN: z.string().default("http://localhost:5173"),
   CLIENT_ORIGINS: z.string().optional(),
+  PUBLIC_APP_URL: z.string().url().optional(),
   JWT_SECRET: z.string().min(12).default("change-this-secret"),
   JWT_EXPIRES_IN: z.string().default("8h"),
   EMAIL_API_KEY: z.string().default("H*SDahkkkosdfh0a-8asd12313231858ajadsncclvjASJD123912391asdDAsd8@71q2312981"),

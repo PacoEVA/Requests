@@ -5,7 +5,7 @@
 // y muchas veces también flexbox/grid, por eso NO se usan aquí).
 // ─────────────────────────────────────────────────────────────────
 
-export type RequisitionStatus = "pending" | "approved" | "partial" | "rejected";
+export type RequisitionStatus = "pending" | "approved" | "partial" | "rejected" | "assigned" | "ready" | "cancelled";
 
 export interface RequisitionItem {
   /** Nombre/descripción del artículo solicitado */
@@ -33,6 +33,8 @@ export interface EmailTemplateData {
   supervisor?: { name: string; role?: string };
   /** Nota dejada por el administrador */
   adminNote?: string;
+  /** Etiqueta de la nota para distinguir empleado, administrador o supervisor. */
+  noteLabel?: string;
   ctaLabel?: string;
   ctaUrl?: string;
   footer?: string;
@@ -43,6 +45,9 @@ const STATUS_STYLES: Record<RequisitionStatus, { label: string; bg: string; fg: 
   approved: { label: "Aprobada", bg: "#d1fae5", fg: "#065f46" },
   partial: { label: "Aprobada parcial", bg: "#dbeafe", fg: "#1e40af" },
   rejected: { label: "Rechazada", bg: "#fee2e2", fg: "#991b1b" },
+  assigned: { label: "Asignada", bg: "#e0e7ff", fg: "#3730a3" },
+  ready: { label: "Lista para entregar", bg: "#cffafe", fg: "#155e75" },
+  cancelled: { label: "Cancelada", bg: "#fee2e2", fg: "#991b1b" },
 };
 
 function escapeHtml(value: string | number): string {
@@ -153,7 +158,7 @@ export function buildEmailHtml(data: EmailTemplateData) {
       <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin: 0 0 20px;">
         <tr>
           <td style="background-color: #fffbeb; border-left: 3px solid #f59e0b; border-radius: 6px; padding: 12px 16px;">
-            <p style="margin: 0; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #92400e;">Nota del administrador</p>
+            <p style="margin: 0; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #92400e;">${escapeHtml(data.noteLabel ?? "Comentario del administrador")}</p>
             <p style="margin: 6px 0 0; font-size: 14px; line-height: 1.5; color: #78350f;">${escapeHtml(
               data.adminNote,
             ).replace(/\n/g, "<br />")}</p>

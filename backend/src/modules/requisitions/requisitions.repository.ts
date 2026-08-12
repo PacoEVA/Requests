@@ -358,6 +358,7 @@ export class RequisitionsRepository {
           S.Name AS StatusName,
           S.IsFinal AS StatusIsFinal,
           E.Name AS EmployeeName,
+          E.Correo AS EmployeeEmail,
           D.Id AS DepartmentId,
           D.Name AS DepartmentName,
           U.FullName AS AssignedToName
@@ -598,7 +599,7 @@ export class RequisitionsRepository {
   }
 
   /** Asigna responsable interno y registra la accion en historial. */
-  async assign(requisitionId: number, assignedToUserId: number, performedByUserId: number) {
+  async assign(requisitionId: number, assignedToUserId: number, performedByUserId: number, comment: string) {
     const pool = await getDbPool();
     const transaction = new sql.Transaction(pool);
     await transaction.begin();
@@ -629,11 +630,13 @@ export class RequisitionsRepository {
         .input("Id", sql.Int, requisitionId)
         .input("PerformedByUserId", sql.Int, performedByUserId)
         .input("AssignedToUserName", sql.NVarChar(150), nombreSupervisor.recordset[0]?.FullName ?? "Usuario Interno")
+        .input("Comment", sql.NVarChar(1000), comment)
         .query(`
           INSERT INTO RequisitionHistory
             (RequisitionId, Action, PerformedByType, InternalUserId, Notes)
           VALUES
-            (@Id, 'ASSIGNED', 'INTERNAL_USER', @PerformedByUserId, 'Responsable asignado: ' + @AssignedToUserName)
+            (@Id, 'ASSIGNED', 'INTERNAL_USER', @PerformedByUserId,
+             CONCAT('Responsable asignado: ', @AssignedToUserName, '. Comentario: ', @Comment))
         `);
 
       await transaction.commit();

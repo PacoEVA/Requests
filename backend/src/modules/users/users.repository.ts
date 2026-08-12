@@ -4,12 +4,52 @@ import type { RoleName } from "../auth/auth.types";
 export interface InternalUserInput {
   username: string;
   fullName: string;
+  email: string;
   password?: string;
   role: RoleName;
   departmentId?: number;
 }
 
+export interface InternalUserIdentityConflicts {
+  username: boolean;
+  email: boolean;
+}
+
 export class UsersRepository {
+  /** Comprueba si usuario o correo pertenecen a otra cuenta interna. */
+  async findIdentityConflicts(
+    values: Pick<InternalUserInput, "username" | "email">,
+    excludeUserId?: number
+  ): Promise<InternalUserIdentityConflicts> {
+    const pool = await getDbPool();
+    const result = await pool
+      .request()
+      .input("Username", sql.NVarChar(80), values.username)
+      .input("Correo", sql.NVarChar(255), values.email)
+      .input("ExcludeUserId", sql.Int, excludeUserId ?? null)
+      .query(`
+        SELECT
+          CONVERT(BIT, CASE WHEN EXISTS (
+            SELECT 1
+            FROM InternalUsers
+            WHERE Username = @Username
+              AND (@ExcludeUserId IS NULL OR Id <> @ExcludeUserId)
+          ) THEN 1 ELSE 0 END) AS UsernameExists,
+          CONVERT(BIT, CASE WHEN EXISTS (
+            SELECT 1
+            FROM InternalUsers
+            WHERE Correo = @Correo
+              AND (@ExcludeUserId IS NULL OR Id <> @ExcludeUserId)
+          ) THEN 1 ELSE 0 END) AS CorreoExists;
+      `);
+
+    const row = result.recordset[0];
+    return {
+      username: Boolean(row.UsernameExists),
+      email: Boolean(row.CorreoExists)
+    };
+  }
+
   /** Consulta usuarios internos con rol y departamento asociado. */
   async list() {
     const pool = await getDbPool();
@@ -18,6 +58,7 @@ export class UsersRepository {
         U.Id,
         U.Username,
         U.FullName,
+        U.Correo,
         U.DepartmentId,
         U.IsActive,
         U.RequirePasswordChange,
@@ -40,6 +81,7 @@ export class UsersRepository {
       .request()
       .input("Username", sql.NVarChar(80), input.username)
       .input("FullName", sql.NVarChar(150), input.fullName)
+      .input("Correo", sql.NVarChar(255), input.email)
       .input("PasswordHash", sql.NVarChar(255), passwordHash)
       .input("RoleName", sql.NVarChar(50), input.role)
       .input("DepartmentId", sql.Int, input.departmentId ?? null)
@@ -47,9 +89,9 @@ export class UsersRepository {
         DECLARE @RoleId INT;
         SELECT @RoleId = Id FROM Roles WHERE Name = @RoleName;
 
-        INSERT INTO InternalUsers (Username, FullName, PasswordHash, RoleId, DepartmentId, RequirePasswordChange)
-        OUTPUT INSERTED.Id, INSERTED.Username, INSERTED.FullName, INSERTED.RoleId, INSERTED.DepartmentId, INSERTED.IsActive
-        VALUES (@Username, @FullName, @PasswordHash, @RoleId, @DepartmentId, 1)
+        INSERT INTO InternalUsers (Username, FullName, Correo, PasswordHash, RoleId, DepartmentId, RequirePasswordChange)
+        OUTPUT INSERTED.Id, INSERTED.Username, INSERTED.FullName, INSERTED.Correo, INSERTED.RoleId, INSERTED.DepartmentId, INSERTED.IsActive
+        VALUES (@Username, @FullName, @Correo, @PasswordHash, @RoleId, @DepartmentId, 1)
       `);
 
     return result.recordset[0];
@@ -63,6 +105,7 @@ export class UsersRepository {
       .input("Id", sql.Int, id)
       .input("Username", sql.NVarChar(80), input.username)
       .input("FullName", sql.NVarChar(150), input.fullName)
+      .input("Correo", sql.NVarChar(255), input.email)
       .input("RoleName", sql.NVarChar(50), input.role)
       .input("DepartmentId", sql.Int, input.departmentId ?? null)
       .query(`
@@ -72,10 +115,11 @@ export class UsersRepository {
         UPDATE InternalUsers
         SET Username = @Username,
             FullName = @FullName,
+            Correo = @Correo,
             RoleId = @RoleId,
             DepartmentId = @DepartmentId,
             UpdatedAt = SYSUTCDATETIME()
-        OUTPUT INSERTED.Id, INSERTED.Username, INSERTED.FullName, INSERTED.RoleId, INSERTED.DepartmentId, INSERTED.IsActive
+        OUTPUT INSERTED.Id, INSERTED.Username, INSERTED.FullName, INSERTED.Correo, INSERTED.RoleId, INSERTED.DepartmentId, INSERTED.IsActive
         WHERE Id = @Id
       `);
 
@@ -118,6 +162,7 @@ export class UsersRepository {
           U.Id,
           U.Username,
           U.FullName,
+          U.Correo,
           U.DepartmentId,
           U.IsActive,
           U.RequirePasswordChange,
@@ -131,6 +176,23 @@ export class UsersRepository {
       `);
       
     return result.recordset[0] || null;
+  }
+
+  /** Devuelve destinatarios activos de los roles que gestionan compras. */
+  async listActivePurchasingEmailRecipients() {
+    const pool = await getDbPool();
+    const result = await pool.query(`
+      SELECT U.Id, U.FullName, U.Correo, R.Name AS RoleName
+      FROM InternalUsers U
+      INNER JOIN Roles R ON U.RoleId = R.Id
+      WHERE U.IsActive = 1
+        AND U.Correo IS NOT NULL
+        AND LTRIM(RTRIM(U.Correo)) <> ''
+        AND R.Name IN ('Admin', 'Compras')
+      ORDER BY U.FullName ASC;
+    `);
+
+    return result.recordset;
   }
 
 }

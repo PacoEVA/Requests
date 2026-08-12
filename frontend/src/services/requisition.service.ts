@@ -70,11 +70,11 @@ export const requisitionService = {
     });
   },
   /** Asigna responsable interno a una requisicion. */
-  assign(token: string, id: string, assignedToUserId: number) {
+  assign(token: string, id: string, assignedToUserId: number, comment: string) {
     return apiRequest<{ ok: boolean; requisition: RequisitionDetail }>(`/admin/requisitions/${id}/assign`, {
       method: "PATCH",
       token,
-      body: JSON.stringify({ assignedToUserId })
+      body: JSON.stringify({ assignedToUserId, comment })
     });
   },
   /** Registra entregas parciales o totales. */

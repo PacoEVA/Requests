@@ -9,6 +9,7 @@ function buildEmailServiceUrl() {
 export async function sendEmail(email: Email): Promise<void> {
   const response = await fetch(buildEmailServiceUrl(), {
     method: "POST",
+    signal: AbortSignal.timeout(10_000),
     headers: {
       "Content-Type": "application/json",
       "X-API-Key": env.EMAIL_API_KEY,

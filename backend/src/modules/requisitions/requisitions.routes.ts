@@ -45,7 +45,8 @@ const statusSchema = z.object({
 });
 
 const assignSchema = z.object({
-  assignedToUserId: z.number().int().positive()
+  assignedToUserId: z.number().int().positive(),
+  comment: z.string().trim().min(1).max(800)
 });
 
 const deliverSchema = z.object({

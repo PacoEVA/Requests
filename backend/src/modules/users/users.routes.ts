@@ -9,6 +9,7 @@ const roleSchema = z.enum(["Admin", "Compras", "Supervisor"]);
 const userBaseSchema = z.object({
   username: z.string().min(3).max(80),
   fullName: z.string().min(2).max(150),
+  email: z.string().trim().email("Correo invalido").max(255),
   role: roleSchema,
   departmentId: z.number().int().positive().optional()
 });

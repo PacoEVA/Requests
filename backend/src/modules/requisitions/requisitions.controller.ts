@@ -1,10 +1,6 @@
 import type { RequestHandler } from "express";
 import { AppError } from "../../middlewares/error.middleware";
 import { requisitionsService } from "./requisitions.service";
-import { buildEmailHtml } from "../../utils/email-templates";
-import { sendEmail } from "../../utils/send-email";
-import { employeesService } from "../employees/employees.service";
-import { usersService } from "../users/users.service";
 
 /** Valida y convierte parametros id de requisicion. */
 function numericId(value: string | undefined) {
@@ -134,39 +130,6 @@ export class RequisitionsController {
         req.body,
       );
 
-      const usuario = await employeesService.getById(requisition.history[0].EmployeeId as number);
-      const AdminUser = await usersService.getById(req.user.id);
-      const details = [
-        { label: "Aprobada por:", value: AdminUser?.FullName || "Desconocido" },
-        {}
-      ];
-
-      if(requisition && usuario && usuario.email) {
-        // Enviar notificacion por correo dependiendo el estado
-        switch (req.body.statusCode) {
-          case "APPROVED":
-            const email = await sendEmail({
-              to: usuario.email as string ,
-              subject: "Requisición Aprobada",
-              html: buildEmailHtml({
-                title: "Requisición Aprobada",
-                subtitle: "Tu requisición ha sido aprobada.",
-                heading: "Aprobación de Requisición",
-                status: "approved",
-                message: "Tu requisición ha sido aprobada y está lista para ser procesada.",
-                details: [
-                  { label: "Aprobada por:", value: AdminUser?.FullName || "Desconocido" },
-                ],
-                ctaLabel: "Ver Requisición",
-                ctaUrl: `https://10.0.0.54:9090/employee/requisitions/${numericId(req.params.id)}`,
-              }),
-            });
-
-            break;
-          // Agregar más casos según los estados que quieras manejar
-        }
-      }
-
       res.json({ ok: true, requisition });
     } catch (error) {
       next(error);
@@ -182,6 +145,7 @@ export class RequisitionsController {
         req.user,
         numericId(req.params.id),
         req.body.assignedToUserId,
+        req.body.comment,
       );
       res.json({ ok: true, requisition });
     } catch (error) {
